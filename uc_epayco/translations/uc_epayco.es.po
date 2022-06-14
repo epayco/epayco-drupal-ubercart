@@ -1,0 +1,347 @@
+# $Id$
+#
+# Spanish translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  uc_epayco.pages.inc: n/a
+#  uc_epayco.module: n/a
+#  uc_epayco.info: n/a
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2020-02-11 16:30-0500\n"
+"PO-Revision-Date: 2020-02-22 16:40-0500\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Spanish <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"X-Generator: Poedit 1.5.7\n"
+
+#: uc_epayco.pages.inc:22
+msgid "Order doesn't exists."
+msgstr "El pedido no existe."
+
+#: uc_epayco.pages.inc:26
+msgid "You aren't the owner of this order."
+msgstr "Usted no es el dueño de ésta orden."
+
+#: uc_epayco.pages.inc:31
+msgid "Signature doesn't match."
+msgstr "La firma no coincide."
+
+#: uc_epayco.pages.inc:57
+msgid ""
+"Unknown. Please contact with desarollo@payco.co and/or website administrator for more "
+"information."
+msgstr ""
+"Desconocido. Para más información, por favor contacte con desarollo@payco.co y/o al "
+"administrador del sitio."
+
+#: uc_epayco.pages.inc:62
+msgid ""
+"The transaction has not been confirmed to the merchant"
+"this takes a few seconds, please wait a moment"
+msgstr ""
+"la transacción no se ha confirmado al comercio, "
+"esto tarda unos pocos segundos, "
+"por favor esperar un momento"
+
+#: uc_epayco.pages.inc:62
+msgid "!reload_link to check if it is updated."
+msgstr "!reload_link para ver si ya se actualizó el estado del pedido."
+
+#: uc_epayco.pages.inc:62
+msgid "Reload this page"
+msgstr "Recargue esta página"
+
+#: uc_epayco.pages.inc:67
+msgid "Amount"
+msgstr "Monto"
+
+#: uc_epayco.pages.inc:68
+msgid "Transaction Status"
+msgstr "Estado de la transacción"
+
+#: uc_epayco.pages.inc:69
+msgid "Transaction ID"
+msgstr "ID de la transacción"
+
+#: uc_epayco.pages.inc:70
+msgid "Sale Reference"
+msgstr "Referencia de Venta"
+
+
+#: uc_epayco.pages.inc:75
+msgid "Payment Method"
+msgstr "Método de Pago"
+
+#: uc_epayco.pages.inc:76
+msgid "Order Status"
+msgstr "Estado del Pedido"
+
+#: uc_epayco.pages.inc:77
+msgid "Reference Code"
+msgstr "Código de Referencia"
+
+#: uc_epayco.pages.inc:81
+msgid "Continue Shopping"
+msgstr "Seguir Comprando"
+
+#: uc_epayco.pages.inc:111;110
+msgid ""
+"Confirming order !order_id but it isn't in checkout. Its current status is !"
+"current_order_status."
+msgstr ""
+"Confirmando el pedido !order_id pero no está en proceso de compra. El estado "
+"actual es !current_order_status."
+
+#: uc_epayco.pages.inc:115;114
+msgid ""
+"Confirming order !order_id but it is already completed. Its current status "
+"is !current_order_status."
+msgstr ""
+"Confirmando el pedido !order_id pero ya está completado. El estado actual "
+"es !current_order_status."
+
+#: uc_epayco.pages.inc:123
+msgid "Order Completed."
+msgstr "Pedido Completo."
+
+#: uc_epayco.pages.inc:123;132;140;147;154
+msgid "ePayco # !reference_pol"
+msgstr ""
+
+#: uc_epayco.pages.inc:132
+msgid "Processing Order."
+msgstr "Procesando Pedido."
+
+#: uc_epayco.pages.inc:140
+msgid "Order Rejected."
+msgstr "Pedido Rechazado."
+
+#: uc_epayco.pages.inc:147
+msgid "Order Canceled."
+msgstr "Pedido Cancelado."
+
+#: uc_epayco.pages.inc:154
+msgid "Order Error."
+msgstr "Error del Pedido."
+
+#: uc_epayco.pages.inc:170
+msgid "ePayco response:"
+msgstr "Respuesta de ePayco:"
+
+#: uc_epayco.pages.inc:172
+msgid "Sale Reference (!key): !value"
+msgstr "Referencia de Venta (!key): !value"
+
+#: uc_epayco.pages.inc:173
+msgid "Transaction status (!key): !value !info"
+msgstr "Estado de la transacción (!key): !value !info"
+
+#: uc_epayco.pages.inc:174
+msgid "Response code (!key): !value !info"
+msgstr "Código de respuesta (!key): !value !info"
+
+#: uc_epayco.pages.inc:110;114;128;136;143;150;156;161;165
+#: uc_epayco.module:116 uc_epayco.info:0
+msgid "ePayco"
+msgstr ""
+
+#: uc_epayco.pages.inc:128
+msgid "Order !order_id completed. ePayco # !reference_pol"
+msgstr "Pedido !order_id completado. ePayco # !reference_pol"
+
+#: uc_epayco.pages.inc:136
+msgid "Processing order !order_id. ePayco # !reference_pol"
+msgstr "Procesando el pedido !order_id. ePayco # !reference_pol"
+
+#: uc_epayco.pages.inc:143
+msgid "Order !order_id rejected. ePayco # !reference_pol"
+msgstr "Pedido !order_id rechazado. ePayco # !reference_pol"
+
+#: uc_epayco.pages.inc:150
+msgid "Order !order_id canceled. ePayco # !reference_pol"
+msgstr "Pedido !order_id cancelado. ePayco # !reference_pol"
+
+#: uc_epayco.pages.inc:156
+msgid "Error with order !order_id. ePayco # !reference_pol"
+msgstr "Error con el pedido !order_id. ePayco # !reference_pol"
+
+#: uc_epayco.pages.inc:161
+msgid "Confirming order !order_id but signature doesn't match."
+msgstr "Confirmando el pedido !order_id pero la firma no coincide."
+
+#: uc_epayco.pages.inc:165
+msgid "Confirming order !order_id but it doesn't exists."
+msgstr "Confirmando el pedido !order_id pero no existe."
+
+#: uc_epayco.module:54
+msgid "1 product"
+msgstr "1 producto"
+
+#: uc_epayco.module:54
+msgid "@count products"
+msgstr "@count productos"
+
+#: uc_epayco.module:98
+msgid "Back"
+msgstr "Volver"
+
+#: uc_epayco.module:118
+msgid ""
+"ePayco, Credit Cards, PSE Debit, SafetyPay and Cash "
+msgstr ""
+"ePayco, Tarjetas de Credito, Debito PSE, SafetyPay y Efectivo"
+
+#: uc_epayco.module:134
+msgid "Merchant ID"
+msgstr ""
+
+#: uc_epayco.module:141
+msgid "API key"
+msgstr ""
+
+#: uc_epayco.module:147
+msgid "Account ID"
+msgstr ""
+
+
+#: uc_epayco.module:154
+msgid "Transaction Type"
+msgstr "Tipo de transacción"
+
+#: uc_epayco.module:157;282
+msgid "Test"
+msgstr "Prueba"
+
+#: uc_epayco.module:158
+msgid "Live"
+msgstr "Producción"
+
+#: uc_epayco.module:163
+msgid "Reference Prefix"
+msgstr "Prefijo de referencia"
+
+#: uc_epayco.module:166
+msgid ""
+"This will be added to the Order ID.  You must use it if you have more than "
+"one Store."
+msgstr ""
+"Este prefijo será añadido al número de la orden.  Debería usarlo si tiene "
+"más de una tienda."
+
+#: uc_epayco.module:171
+msgid "Currency"
+msgstr "Moneda"
+
+#: uc_epayco.module:178
+msgid "Language"
+msgstr "Idioma"
+
+#: uc_epayco.module:182
+msgid ""
+"The system will try to show ePayco's page in current user's language. If "
+"it is not available, it will use this value."
+msgstr ""
+"El sistema intentará mostrar la página de ePayco en el idioma actual del "
+"usuario. Si el idioma no está disponible se usará éste valor."
+
+#: uc_epayco.module:184
+msgid "No IVA"
+msgstr "Sin IVA"
+
+#: uc_epayco.module:189
+msgid "This is the list of taxes you have in your !uctaxesurl"
+msgstr "Esta es la lista de impuestos que hay en su !uctaxesurl"
+
+#: uc_epayco.module:192
+msgid "You must enable !taxes module."
+msgstr "Debe activar el módulo !taxes."
+
+#: uc_epayco.module:195
+msgid "IVA"
+msgstr ""
+
+#: uc_epayco.module:203
+msgid "Payment method title"
+msgstr "Título de la forma de pago"
+
+#: uc_epayco.module:208
+msgid "Show"
+msgstr "Mostrar"
+
+#: uc_epayco.module:210
+msgid "Logo + Title"
+msgstr "Logotipo + Título"
+
+#: uc_epayco.module:211
+msgid "Logo"
+msgstr "Logo"
+
+#: uc_epayco.module:212
+msgid "Title"
+msgstr "Título"
+
+#: uc_epayco.module:215
+msgid "The logo is taken from <em>!logo_path</em>"
+msgstr "El logo es tomado de <em>!logo_path</em>"
+
+#: uc_epayco.module:258
+msgid "My Store"
+msgstr "Mi Tienda"
+
+#: uc_epayco.module:274
+msgid "Payment with Savings or Checking account."
+msgstr "Pago con Cuenta corriente y Cuenta de ahorros."
+
+#: uc_epayco.module:364
+msgid "Colombian Peso"
+msgstr "Peso Colombiano"
+
+#: uc_epayco.module:367
+msgid "US Dollar"
+msgstr "Dólar Americano"
+
+#: uc_epayco.module:381
+msgid "English"
+msgstr "Inglés"
+
+#: uc_epayco.module:382
+msgid "Spanish"
+msgstr "Español"
+
+#: uc_epayco.module:395
+msgid "Capturing Data"
+msgstr "Capturando datos"
+
+#: uc_epayco.module:396
+msgid "New"
+msgstr "Nueva"
+
+#: uc_epayco.module:403
+msgid "Submitted"
+msgstr "Enviada"
+
+#: uc_epayco.module:404
+msgid "Error"
+msgstr "Error"
+
+#: uc_epayco.module:19
+msgid "ePayco Confirmation Page"
+msgstr "Página de Confirmación de ePayco"
+
+#: uc_epayco.module:26
+msgid "ePayco Response Page"
+msgstr "Página de Respuesta de ePayco"
+
+#: uc_epayco.info:0
+msgid "Integrates ePayco with Ubercart"
+msgstr "Integra ePayco con Ubercart"
+
+#: uc_epayco.info:0
+msgid "Ubercart - payment"
+msgstr ""
