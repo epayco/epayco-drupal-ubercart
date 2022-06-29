@@ -70,6 +70,9 @@ function _uc_epayco_response_page() {
         throw new Exception(t("Unknown. Please contact with desarollo@epayco.com and/or website administrator for more information"));
     }
     try {
+       if(isset($jsonData["status"]) && !$jsonData["status"]){
+          drupal_access_denied();
+      }
 		  $validationData = $jsonData['data'];
 		  $ref_payco = $validationData['x_ref_payco'];
 		  $uid = $validationData['x_extra1'];
@@ -113,7 +116,7 @@ function _uc_epayco_response_page() {
     );
 
 
-      switch ($validationData['x_cod_response']) {
+      switch ($validationData['x_cod_transaction_state']) {
 
         case 1: // Payment Received
         $comment = t("Order Completed.") . ' ' . t("ePayco# !reference_pol", $watchdog_variables);
@@ -250,8 +253,6 @@ function _uc_epayco_confirmation_page() {
   }
 
 
-
-
   $uid = $response['x_extra1'];
   $session_id = $response['x_extra3'];
   $order = uc_order_load($response['x_extra4']);
@@ -296,7 +297,7 @@ function _uc_epayco_confirmation_page() {
 
 
 
-      switch ($response['x_cod_response']) {
+      switch ($response['x_cod_transaction_state']) {
 
         case 1: // Payment Received
 
