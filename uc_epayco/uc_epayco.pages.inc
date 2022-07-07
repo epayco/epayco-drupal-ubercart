@@ -4,7 +4,7 @@ function _uc_epayco_checkout_page() {
 
 $output = t('ePayco Checkout:');
 $output .= '<form>';
-$output .= '<script src="https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod.js?version=1643645084821"
+$output .= '<script src="https://checkout.epayco.co/checkout.js"
             class="epayco-button"
             data-epayco-key="'.$_REQUEST["public_key"].'"
             data-epayco-amount="'.$_REQUEST["p_amount"].'"
@@ -48,7 +48,7 @@ function _uc_epayco_response_page() {
 
 
  $ref_payco=$response['ref_payco'];
- $url = 'https://secure.epayco.io/validation/v1/reference/'.$ref_payco;
+ $url = 'https://secure.epayco.co/validation/v1/reference/'.$ref_payco;
   $ch = curl_init();
   $timeout = 5;
   $user_agent='Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0';
