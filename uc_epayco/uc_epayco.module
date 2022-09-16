@@ -1,0 +1,476 @@
+<?php
+
+/******************************
+ *    Constant Definitions    *
+ ******************************/
+
+define('UC_EPAYCO_LIVEURL', 'https://checkout.epayco.co/checkout.js');
+define('UC_EPAYCO_TESTURL', 'https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod.js?version=1643645084821');
+
+/************************
+ *     Drupal Hooks     *
+ ************************/
+
+/**
+ * Implements hook_menu().
+ */
+
+//Este enlace permite a los módulos registrar rutas para definir cómo se manejan las solicitudes de URL.
+function uc_epayco_menu() {
+  $items['cart/uc_epayco/confirmation'] = array(
+    'title' => 'ePayco Confirmation Page',
+    'page callback' => '_uc_epayco_confirmation_page',
+    'access callback' => '_uc_epayco_access_confirmation_page',
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_epayco.pages.inc',
+  );
+  $items['cart/uc_epayco/response'] = array(
+    'title' => 'ePayco Response Page',
+    'page callback' => '_uc_epayco_response_page',
+    'access callback' => '_uc_epayco_access_response_page',
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_epayco.pages.inc',
+  );
+   $items['cart/uc_epayco/checkout'] = array(
+    'title' => 'ePayco checkout Page',
+    'page callback' => '_uc_epayco_checkout_page',
+    'access callback' => '_uc_epayco_access_checkout_page',
+    'type' => MENU_CALLBACK,
+    'file' => 'uc_epayco.pages.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+
+//Permita que los módulos interactúen con el core de Drupal.
+
+/*
+$form:Matriz anidada de elementos de formulario que comprenden el formulario..
+$form_state: Una matriz con clave que contiene el estado actual del formulario.
+$form_id:cadena que representa el nombre del formulario en sí. Normalmente, este es el nombre de la función que generó el formulario.
+*/
+function uc_epayco_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'uc_cart_checkout_review_form' && ($order_id = intval($_SESSION['cart_order'])) > 0) {
+    global $language;
+    global $user;
+    $order = uc_order_load($order_id);
+    if ($order->payment_method == 'epayco') {
+
+      $reference_code = uc_epayco_get_reference($order_id);
+      $amount = uc_epayco_format_amount($order->order_total);
+      $currency = uc_epayco_get_currency();
+
+        switch (intval($order->delivery_country)) {
+          case 840:
+              $country="US";
+            break;
+          case 124:
+              $country="CA";
+            break;
+          default:
+             $country="CO";
+            break;
+        }
+
+      $tax = isset($order->line_items[1]['amount']) ? floatval($order->line_items[1]['amount']): 0;
+      if ($tax>0) {
+        $base_tax =  floatval($amount)-$tax;
+      }else{
+       $base_tax =  floatval($amount);
+      }
+      $description = array();
+      $qty = 0;
+      foreach ($order->products as $item) {
+        $description[] = $item->qty . " x " . $item->title;
+        $qty += $item->qty;
+      }
+      $description = format_plural($qty, t("1 product"), t("@count products")) . ': ' . implode("; ", $description);
+
+      if (mb_strlen($description) > 250) {
+        $description = mb_substr($description, 0, 246) . ' ...';
+      }
+
+      $extra3 = array(
+        'uid' => $user->uid,
+        'order_id' => $order_id,
+        'cart_id' => uc_cart_get_id(FALSE),
+        'token_id' => session_id(),
+      );
+
+    $data = array(
+        'p_cust_id_cliente' => uc_epayco_get_merchant_id(),
+        'public_key' =>uc_epayco_get_api_key(),
+        'p_id_invoice' => $order_id,
+        'p_description' =>  $item->title,
+        'p_currency_code' => $currency,
+        'p_country_code' => $country,
+        'p_amount' => $amount,
+        'p_tax' => $tax,
+        'p_amount_base' =>  $base_tax,
+        'p_test_request' =>  uc_epayco_get_txn_type(),
+        'p_url_response' => url('cart/uc_epayco/response', array('absolute' => TRUE)),
+        'p_url_confirmation' => url('cart/uc_epayco/confirmation', array('absolute' => TRUE)),
+        'p_signature' => uc_epayco_get_signature($order_id, $amount, $currency),
+        'p_confirm_method' => 'POST',
+        'p_extra1' => $user->uid,
+        'p_extra2'=> uc_cart_get_id(FALSE),
+        'p_extra3'=>session_id(),
+        'p_extra4'=> $order_id,
+        'p_type_checkout'=> uc_epayco_get_type_checkout(),
+        'p_billing_email' => $order->primary_email,
+        'p_billing_name' => $order->billing_first_name." ".$order->billing_last_name,
+        'p_billing_cellphone' => $order->billing_phone,
+    );
+
+      foreach ($data as $key => $value) {
+        $form[$key] = array(
+          '#type' => 'hidden',
+          '#value' => $value,
+        );
+      }
+       $form['#suffix'] = '<script src="https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod.js?version=1643645084821">
+       </script>';
+
+      $form['#action'] = url('cart/uc_epayco/checkout', array('absolute' => TRUE));
+       $form['actions']['submit'] = array(
+         '#type' => 'submit',
+         '#value' => t('Submit order'),
+       );
+
+    }
+  }
+
+}
+
+
+
+
+/**************************
+ *     Ubercart Hooks     *
+ **************************/
+
+/*
+ * Implementation of hook_uc_payment_method().
+ */
+
+//Los métodos de pago aparecen al finalizar la compra o en las pantallas de administración de pedidos
+function uc_epayco_uc_payment_method() {
+
+  $methods[] = array(
+    'id' => 'epayco',
+    'name' => t('ePayco'),
+    'title' => uc_epayco_get_title(),
+    'desc' => t('ePayco, Credit Cards, PSE Debit, SafetyPay and Cash service.'),
+    'callback' => 'uc_epayco_method',
+    'weight' => 1,
+    'checkout' => TRUE,
+  );
+
+  return $methods;
+}
+
+/**
+ * Ubercart callback function for ePayco configuration form.
+ */
+
+function uc_epayco_method($op, $arg1 = NULL, $form = NULL, &$form_state = NULL) {
+  switch ($op) {
+    case 'settings':
+    $form['uc_epayco_merchant_id'] = array(
+      '#title' => t('P_CUST_ID'),
+      '#type' => 'textfield',
+      '#default_value' => uc_epayco_get_merchant_id(),
+      '#required' => TRUE,
+      '#maxlength' => 12,
+    );
+
+    $form['uc_epayco_api_key'] = array(
+      '#title' => t('PUBLICK_KEY'),
+      '#type' => 'textfield',
+      '#default_value' => uc_epayco_get_api_key(),
+      '#required' => TRUE,
+    );
+
+        $form['uc_epayco_p_key'] = array(
+      '#title' => t('P_KEY'),
+      '#type' => 'textfield',
+      '#default_value' => uc_epayco_get_p_key(),
+      '#required' => TRUE,
+    );
+        $form['uc_epayco_checkout_type'] = array(
+        '#type' => 'radios',
+        '#title' => t('Checkout type'),
+        '#options' => array(
+          'true' => t('Standar checkout '),
+          'false' => t('One pege checkout '),
+        ),
+        '#default_value' => uc_epayco_get_type_checkout(),
+        '#required' => TRUE,
+      );
+
+    $form['uc_epayco_txn_type'] = array(
+      '#title' => t('Transaction Type'),
+      '#type' => 'select',
+      '#options' => array(
+        'true' => t('Test'),
+        'false' => t('Live'),
+      ),
+      '#default_value' => uc_epayco_get_txn_type(),
+      '#required' => TRUE,
+      '#description' => t("Test / Production"),
+    );
+
+        $form['uc_epayco_reference'] = array(
+      '#title' => t('Reference Prefix'),
+      '#type' => 'textfield',
+      '#default_value' => uc_epayco_get_reference_prefix(),
+      '#description' => t('This will be added to the Order ID.  You must use it if you have more than one Store.'),
+      '#maxlength' => 35,
+      '#required' => TRUE,
+    );
+
+    $form['uc_epayco_currency'] = array(
+      '#type' => 'select',
+      '#title' => t('Currency'),
+      '#options' => uc_epayco_currencies(),
+      '#default_value' => uc_epayco_get_currency(),
+      '#required' => TRUE,
+    );
+    $form['uc_epayco_language'] = array(
+      '#type' => 'select',
+      '#title' => t('Language'),
+      '#options' => uc_epayco_languages(),
+      '#default_value' => uc_epayco_get_language(),
+      '#required' => TRUE,
+      '#description' => t("The system will try to show ePayco's page in current user's language. If it is not available, it will use this value."),
+    );
+    $taxoptions[0] = t('No IVA');
+    if (module_exists('uc_taxes')) {
+      foreach (uc_taxes_rate_load(NULL) as $key => $value) {
+        $taxoptions[$key] = $value->name;
+      }
+      $iva_description = t('This is the list of taxes you have in your !uctaxesurl', array('!uctaxesurl' => l('Tax rates and settings page.', 'admin/store/settings/taxes')));
+    }
+    else {
+      $iva_description = t('You must enable !taxes module.', array('!taxes' => l('Taxes', 'admin/modules', array('fragment' => 'edit-status-uc-taxes-wrapper'))));
+    }
+    $form['uc_epayco_iva_tax_id'] = array(
+      '#title' => t('IVA'),
+      '#type' => 'select',
+      '#options' => $taxoptions,
+      '#description' => $iva_description,
+      '#default_value' => uc_epayco_get_iva_tax_id(),
+    );
+    $form['uc_epayco_method_title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Payment method title'),
+      '#default_value' => uc_epayco_get_method_title(),
+    );
+    $form['uc_epayco_show_logo'] = array(
+      '#type' => 'select',
+      '#title' => t('Show'),
+      '#options' => array(
+        0 => t('Logo + Title'),
+        1 => t('Logo'),
+        2 => t('Title'),
+      ),
+      '#default_value' => uc_epayco_get_show_logo(),
+        '#description' => t("The logo is taken from <em>!logo_path</em>", array("!logo_path" => 'https://multimedia.epayco.co/epayco-landing/btns/epayco-logo-fondo-oscuro.png')),
+    );
+
+    return $form;
+    break;
+  }
+}
+
+function uc_epayco_get_title() {
+  $path = base_path() . drupal_get_path('module', 'uc_epayco');
+  $logo = '<img src="https://multimedia.epayco.co/epayco-landing/btns/epayco-logo-fondo-oscuro-lite.png" alt="ePayco" />';
+  $title = uc_epayco_get_method_title();
+  switch (uc_epayco_get_show_logo()) {
+    case 1:
+    $show = $logo;
+    break;
+    case 2:
+    $show = $title;
+    break;
+    default:
+    $show =  $title . '<br> ' .$logo ;
+    break;
+  }
+  return $show;
+}
+
+function uc_epayco_get_merchant_id() {
+  return variable_get('uc_epayco_merchant_id', '');
+}
+
+function uc_epayco_get_api_key() {
+  return variable_get('uc_epayco_api_key', '');
+}
+
+function uc_epayco_get_p_key() {
+  return variable_get('uc_epayco_p_key', '');
+}
+
+function uc_epayco_get_type_checkout() {
+  return variable_get('uc_epayco_checkout_type');
+}
+
+function uc_epayco_get_txn_type() {
+  return variable_get('uc_epayco_txn_type');
+}
+function uc_epayco_get_reference_prefix() {
+  return variable_get('uc_epayco_reference', t('My Store'));
+}
+function uc_epayco_get_currency() {
+  return variable_get('uc_epayco_currency');
+}
+
+function uc_epayco_get_language() {
+  return variable_get('uc_epayco_language');
+}
+
+function uc_epayco_get_iva_tax_id() {
+  return variable_get('uc_epayco_iva_tax_id', 0);
+}
+
+function uc_epayco_get_method_title() {
+  return variable_get('uc_epayco_method_title', t('Payment with Savings or Checking account ePayco.'));
+}
+
+function uc_epayco_get_show_logo() {
+  return variable_get('uc_epayco_show_logo', 0);
+}
+
+function uc_epayco_get_reference($order_id) {
+  return uc_epayco_get_reference_prefix() . ' - ' . $order_id . (!uc_epayco_get_txn_type() ? ' - ' . t('Test') : '');
+}
+
+function uc_epayco_get_iva($order) {
+  $iva_tax_id = uc_epayco_get_iva_tax_id();
+
+  if (!$iva_tax_id) {
+    return 0;
+  }
+
+  $iva = 0;
+  foreach ($order->line_items as $item) {
+    if ($item['data']['tax_id'] == $iva_tax_id) {
+      $iva += $item['amount'];
+    }
+  }
+
+  return $iva;
+}
+
+
+function uc_epayco_get_base($order) {
+  $iva_tax_id = uc_epayco_get_iva_tax_id();
+
+  if (!$iva_tax_id) {
+    return 0;
+  }
+
+  $base = 0;
+  foreach ($order->line_items as $item) {
+    if ($item['data']['tax_id'] == $iva_tax_id) {
+      $base += $item['data']['taxable_amount'];
+    }
+  }
+
+  return $base;
+}
+
+function uc_epayco_get_signature($reference_code, $amount, $currency, $txn_state = NULL) {
+  $api_key = uc_epayco_get_api_key();
+  $merchant_id = uc_epayco_get_merchant_id();
+
+  if (!is_null($txn_state)) {
+    // In confirmation page, there should only be 1 decimal if the second one is 0.
+    $amount10 = $amount * 10;
+    $amount10int = (integer) $amount10;
+    if ($amount10 == $amount10int) {
+      $decimals = 1;
+    }
+    else {
+      $decimals = 2;
+    }
+    $amount = number_format($amount, $decimals, '.', '');
+
+    // Fix an bug generated when a website doesn't use a reference prefix.
+    // See https://www.drupal.org/node/2551547
+    $reference_prefix = uc_epayco_get_reference_prefix();
+    if (empty($reference_prefix)) {
+      $reference_code = " " . $reference_code;
+    }
+  }
+
+
+  $text =   $merchant_id .'^'.$api_key.'^'.$reference_code.'^'.$amount.'^'.$currency;
+  if (!is_null($txn_state)) {
+    $text .= "~$txn_state";
+  }
+
+  return md5($text);
+}
+
+function uc_epayco_format_amount($value) {
+  return number_format($value, 2, '.', '');
+}
+
+function uc_epayco_format_price($value) {
+  $variables = array(
+    'price' => $value
+  );
+  return theme('uc_price', $variables);
+}
+
+function _uc_epayco_access_confirmation_page() {
+  return TRUE;
+}
+
+function _uc_epayco_access_response_page() {
+  return TRUE;
+}
+
+function _uc_epayco_access_checkout_page() {
+  return TRUE;
+}
+function _uc_epayco_set_extra3(&$extra3, $index, $value) {
+  $extra3[$index] = $value;
+}
+
+function _uc_epayco_get_extra3($extra3, $index, $value) {
+  $extra3 = explode('-', $extra3);
+  return $extra3[$index];
+}
+
+function uc_epayco_currencies($key = NULL) {
+  $list = array(
+    'COP' => t('Colombian Peso'),
+    'USD' => t('US Dollar'),
+  );
+  if (!is_null($key)) {
+    return _uc_epayco_list_key($list, $key);
+  }
+  asort($list);
+  return $list;
+}
+
+function uc_epayco_languages($key = NULL) {
+  $list = array(
+    'EN' => t('English'),
+    'ES' => t('Spanish'),
+  );
+
+  if (!is_null($key)) {
+    return _uc_epayco_list_key($list, $key);
+  }
+
+  return $list;
+}
+
