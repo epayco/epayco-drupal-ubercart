@@ -1,36 +1,142 @@
 <?php
 
 function _uc_epayco_checkout_page() {
-
+if ($_REQUEST["p_lang"] == 'EN') {
+    $epaycoButtonImage = 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color-Ingles.png';
+}else{
+    $epaycoButtonImage = 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color1.png';
+}
 $output = t('ePayco Checkout:');
-$output .= '<form>';
-$output .= '<script src="https://checkout.epayco.co/checkout.js"
-            class="epayco-button"
-            data-epayco-key="'.$_REQUEST["public_key"].'"
-            data-epayco-amount="'.$_REQUEST["p_amount"].'"
-            data-epayco-tax-base="'.$_REQUEST["p_amount_base"].'"
-            data-epayco-tax="'.$_REQUEST["p_tax"].'"
-            data-epayco-name="'.$_REQUEST["p_description"].'"
-            data-epayco-description="'.$_REQUEST["p_description"].'"
-            data-epayco-currency="'.$_REQUEST["p_currency_code"].'"
-            data-epayco-country="'.$_REQUEST["p_country_code"].'"
-            data-epayco-test="'.$_REQUEST["p_test_request"].'"
-            data-epayco-external="'.$_REQUEST["p_type_checkout"].'"
-            data-epayco-response="'.$_REQUEST["p_url_response"].'"
-            data-epayco-confirmation="'.$_REQUEST["p_url_confirmation"].'"
-            data-epayco-autoclick="true"
-            data-epayco-extra1="'.$_REQUEST["p_extra1"].'"
-            data-epayco-extra2="'.$_REQUEST["p_extra2"].'"
-            data-epayco-extra3="'.$_REQUEST["p_extra3"].'"
-            data-epayco-extra4="'.$_REQUEST["p_extra4"].'"
-            data-epayco-invoice="'.$_REQUEST["p_extra4"].'"
-            data-epayco-email-billing="'.$_REQUEST["p_billing_email"].'"
-            data-epayco-name-billing="'.$_REQUEST["p_billing_name"].'"
-            data-epayco-cellphone-billing="'.$_REQUEST["p_billing_cellphone"].'"
-            data-epayco-button="https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color1.png"
-            >';
-$output .= '</script>';
- $output .= '</form>';
+$output .= sprintf('
+                    <div class="loader-container">
+                        <div class="loading"></div>
+                    </div>
+                    <p>       
+                     <center>
+                        <a id="btn_epayco" href="#">
+                            <img src="'.$epaycoButtonImage.'">
+                        </a>
+                     </center> 
+                   </p>
+                    <script
+                       src="'.$_REQUEST["url_checkout"].'">
+                    </script>
+                    <script> var handler = ePayco.checkout.configure({
+                        key: "%s",
+                        test: "%s"
+                    })
+                    var date = new Date().getTime();
+                    var data = {
+                        name: "%s",
+                        description: "%s",
+                        invoice: "%s",
+                        currency: "%s",
+                        amount: "%s".toString(),
+                        tax_base: "%s".toString(),
+                        tax: "%s".toString(),
+                        taxIco: "%s".toString(),
+                        country: "%s",
+                        lang: "%s",
+                        external: "%s",
+                        confirmation: "%s",
+                        response: "%s",
+                        name_billing: "%s",
+                        address_billing: "%s",
+                        email_billing: "%s",
+                        mobilephone_billing: "%s",
+                        autoclick: "true",
+                        ip: "%s",
+                        test: "%s".toString(),
+                        extras_epayco:{extra5:"P35"}
+                    }
+                    const apiKey = "%s";
+                    const privateKey = "%s";
+                    data.extra1 = "%s";
+                    data.extra2 = "%s";
+                    data.extra3 = "%s";
+                    data.extra4 = "%s";
+                    var openNewChekout = function () {
+                        if(localStorage.getItem("invoicePayment") == null){
+                            localStorage.setItem("invoicePayment", data.invoice);
+                            makePayment(privateKey,apiKey,data, data.external == "true"?true:false)
+                        }else{
+                            if(localStorage.getItem("invoicePayment") != data.invoice){
+                                localStorage.removeItem("invoicePayment");
+                                localStorage.setItem("invoicePayment", data.invoice);
+                                makePayment(privateKey,apiKey,data, data.external == "true"?true:false)
+                            }else{
+                                makePayment(privateKey,apiKey,data, data.external == "true"?true:false)
+                            }
+                        }
+                    }
+                    var makePayment = function (privatekey, apikey, info, external) {
+                        const headers = { "Content-Type": "application/json" } ;
+                        headers["privatekey"] = privatekey;
+                        headers["apikey"] = apikey;
+                        var payment =   function (){
+                            return  fetch("https://cms.epayco.io/checkout/payment/session", {
+                                method: "POST",
+                                body: JSON.stringify(info),
+                                headers
+                            })
+                                .then(res =>  res.json())
+                                .catch(err => err);
+                        }
+                        payment()
+                            .then(session => {
+                                if(session.data.sessionId != undefined){
+                                    localStorage.removeItem("sessionPayment");
+                                    localStorage.setItem("sessionPayment", session.data.sessionId);
+                                    const handlerNew = window.ePayco.checkout.configure({
+                                        sessionId: session.data.sessionId,
+                                        external: external,
+                                    });
+                                    handlerNew.openNew()
+                                }else{
+                                    handler.open(data);
+                                }
+                            })
+                            .catch(error => {
+                                error.message;
+                            });
+                    }
+                    var openChekout = function () {
+                        openNewChekout()
+                    }
+                    var bntPagar = document.getElementById("btn_epayco");
+                    bntPagar.addEventListener("click", openChekout);
+            	    openChekout()
+                </script>
+                </form>
+                </center>
+        ',  trim($_REQUEST["public_key"]),
+            $_REQUEST["p_test_request"],
+            $_REQUEST["p_description"],
+            $_REQUEST["p_description"],
+            $_REQUEST["p_extra4"],
+            $_REQUEST["p_currency_code"],
+            $_REQUEST["p_amount"],
+            $_REQUEST["p_amount_base"],
+            $_REQUEST["p_tax"],
+            '0',
+            $_REQUEST["p_country_code"],
+            $_REQUEST["p_lang"],
+            $_REQUEST["p_type_checkout"],
+            $_REQUEST["p_url_confirmation"],
+            $_REQUEST["p_url_response"],
+            $_REQUEST["p_billing_name"],
+            '',
+            $_REQUEST["p_billing_email"],
+            $_REQUEST["p_billing_cellphone"],
+            $_REQUEST["ip"],
+            $_REQUEST["p_test_request"],
+            trim($_REQUEST["public_key"]),
+            trim($_REQUEST["private_key"]),
+            $_REQUEST["p_extra1"],
+            $_REQUEST["p_extra2"],
+            $_REQUEST["p_extra3"],
+            $_REQUEST["p_extra4"]
+        );
 
   return $output;
 
@@ -48,7 +154,7 @@ function _uc_epayco_response_page() {
 
 
  $ref_payco=$response['ref_payco'];
- $url = 'https://secure.epayco.co/validation/v1/reference/'.$ref_payco;
+ $url = 'https://secure.epayco.io/validation/v1/reference/'.$ref_payco;
   $ch = curl_init();
   $timeout = 5;
   $user_agent='Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0';
