@@ -6,8 +6,9 @@
 function uc_epayco_uninstall() {
   variable_del('uc_epayco_merchant_id');
   variable_del('uc_epayco_api_key');
+  variable_del('uc_epayco_private_key');
   variable_del('uc_epayco_p_key');
-   variable_del('uc_epayco_get_type_checkout');
+  variable_del('uc_epayco_get_type_checkout');
   variable_del('uc_epayco_txn_type');
   variable_del('uc_epayco_currency');
   variable_del('uc_epayco_language');

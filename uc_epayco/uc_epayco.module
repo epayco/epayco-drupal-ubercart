@@ -5,7 +5,7 @@
  ******************************/
 
 define('UC_EPAYCO_LIVEURL', 'https://checkout.epayco.co/checkout.js');
-define('UC_EPAYCO_TESTURL', 'https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod.js?version=1643645084821');
+define('UC_EPAYCO_TESTURL', 'https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod.js');
 
 /************************
  *     Drupal Hooks     *
@@ -101,8 +101,10 @@ function uc_epayco_form_alter(&$form, &$form_state, $form_id) {
       );
 
     $data = array(
+        'url_checkout' => UC_EPAYCO_TESTURL,
         'p_cust_id_cliente' => uc_epayco_get_merchant_id(),
         'public_key' =>uc_epayco_get_api_key(),
+        'private_key' =>uc_epayco_get_private_key(),
         'p_id_invoice' => $order_id,
         'p_description' =>  $item->title,
         'p_currency_code' => $currency,
@@ -123,6 +125,8 @@ function uc_epayco_form_alter(&$form, &$form_state, $form_id) {
         'p_billing_email' => $order->primary_email,
         'p_billing_name' => $order->billing_first_name." ".$order->billing_last_name,
         'p_billing_cellphone' => $order->billing_phone,
+        'p_lang' => uc_epayco_get_language(),
+        'ip' => uc_epayco_ip()
     );
 
       foreach ($data as $key => $value) {
@@ -131,7 +135,7 @@ function uc_epayco_form_alter(&$form, &$form_state, $form_id) {
           '#value' => $value,
         );
       }
-       $form['#suffix'] = '<script src="https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod.js?version=1643645084821">
+       $form['#suffix'] = '<script src="https://checkout.epayco.co/checkout.js">
        </script>';
 
       $form['#action'] = url('cart/uc_epayco/checkout', array('absolute' => TRUE));
@@ -194,22 +198,30 @@ function uc_epayco_method($op, $arg1 = NULL, $form = NULL, &$form_state = NULL) 
       '#required' => TRUE,
     );
 
-        $form['uc_epayco_p_key'] = array(
+    $form['uc_epayco_private_key'] = array(
+      '#title' => t('PRIVATE_KEY'),
+      '#type' => 'textfield',
+      '#default_value' => uc_epayco_get_private_key(),
+      '#required' => TRUE,
+    );
+
+    $form['uc_epayco_p_key'] = array(
       '#title' => t('P_KEY'),
       '#type' => 'textfield',
       '#default_value' => uc_epayco_get_p_key(),
       '#required' => TRUE,
     );
-        $form['uc_epayco_checkout_type'] = array(
-        '#type' => 'radios',
-        '#title' => t('Checkout type'),
-        '#options' => array(
-          'true' => t('Standar checkout '),
-          'false' => t('One pege checkout '),
-        ),
-        '#default_value' => uc_epayco_get_type_checkout(),
-        '#required' => TRUE,
-      );
+
+    $form['uc_epayco_checkout_type'] = array(
+      '#type' => 'radios',
+      '#title' => t('Checkout type'),
+      '#options' => array(
+        'true' => t('Standar checkout '),
+        'false' => t('One pege checkout '),
+      ),
+      '#default_value' => uc_epayco_get_type_checkout(),
+      '#required' => TRUE,
+    );
 
     $form['uc_epayco_txn_type'] = array(
       '#title' => t('Transaction Type'),
@@ -223,7 +235,7 @@ function uc_epayco_method($op, $arg1 = NULL, $form = NULL, &$form_state = NULL) 
       '#description' => t("Test / Production"),
     );
 
-        $form['uc_epayco_reference'] = array(
+    $form['uc_epayco_reference'] = array(
       '#title' => t('Reference Prefix'),
       '#type' => 'textfield',
       '#default_value' => uc_epayco_get_reference_prefix(),
@@ -310,6 +322,10 @@ function uc_epayco_get_merchant_id() {
 
 function uc_epayco_get_api_key() {
   return variable_get('uc_epayco_api_key', '');
+}
+
+function uc_epayco_get_private_key() {
+  return variable_get('uc_epayco_private_key', '');
 }
 
 function uc_epayco_get_p_key() {
@@ -472,5 +488,27 @@ function uc_epayco_languages($key = NULL) {
   }
 
   return $list;
+}
+
+
+function uc_epayco_ip() {
+  $ipaddress = '';
+  if (isset($_SERVER['HTTP_CLIENT_IP']))
+      $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+  else if(isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+      $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+  else if(isset($_SERVER['HTTP_X_FORWARDED']))
+      $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+  else if(isset($_SERVER['HTTP_X_CLUSTER_CLIENT_IP']))
+      $ipaddress = $_SERVER['HTTP_X_CLUSTER_CLIENT_IP'];
+  else if(isset($_SERVER['HTTP_FORWARDED_FOR']))
+      $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+  else if(isset($_SERVER['HTTP_FORWARDED']))
+      $ipaddress = $_SERVER['HTTP_FORWARDED'];
+  else if(isset($_SERVER['REMOTE_ADDR']))
+      $ipaddress = $_SERVER['REMOTE_ADDR'];
+  else
+      $ipaddress = 'UNKNOWN';
+  return $ipaddress;
 }
 
