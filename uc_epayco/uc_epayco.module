@@ -135,7 +135,8 @@ function uc_epayco_form_alter(&$form, &$form_state, $form_id) {
           '#value' => $value,
         );
       }
-       $form['#suffix'] = '<script src="https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod.js">
+      
+      $form['#suffix'] = '<script src="https://checkout.epayco.co/checkout.js">
        </script>';
 
       $form['#action'] = url('cart/uc_epayco/checkout', array('absolute' => TRUE));
