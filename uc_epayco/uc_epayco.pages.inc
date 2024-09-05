@@ -74,7 +74,7 @@ $output .= sprintf('
                         headers["privatekey"] = privatekey;
                         headers["apikey"] = apikey;
                         var payment =   function (){
-                            return  fetch("https://cms.epayco.io/checkout/payment/session", {
+                            return  fetch("https://cms.epayco.co/checkout/payment/session", {
                                 method: "POST",
                                 body: JSON.stringify(info),
                                 headers
@@ -154,7 +154,7 @@ function _uc_epayco_response_page() {
 
 
  $ref_payco=$response['ref_payco'];
- $url = 'https://secure.epayco.io/validation/v1/reference/'.$ref_payco;
+ $url = 'https://secure.epayco.co/validation/v1/reference/'.$ref_payco;
   $ch = curl_init();
   $timeout = 5;
   $user_agent='Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0';
