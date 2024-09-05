@@ -135,7 +135,8 @@ function uc_epayco_form_alter(&$form, &$form_state, $form_id) {
           '#value' => $value,
         );
       }
-       $form['#suffix'] = '<script src="https://checkout.epayco.co/checkout.js">
+      
+      $form['#suffix'] = '<script src="https://checkout.epayco.co/checkout.js">
        </script>';
 
       $form['#action'] = url('cart/uc_epayco/checkout', array('absolute' => TRUE));
@@ -299,19 +300,20 @@ function uc_epayco_method($op, $arg1 = NULL, $form = NULL, &$form_state = NULL) 
 }
 
 function uc_epayco_get_title() {
-  $path = base_path() . drupal_get_path('module', 'uc_epayco');
-  $logo = '<img src="https://multimedia.epayco.co/epayco-landing/btns/epayco-logo-fondo-oscuro-lite.png" alt="ePayco" />';
+  $module_path = drupal_get_path('module', 'uc_epayco');
+  $logo_path = base_path() . $module_path . '/img/paymentLogo.svg';
+  $logo = '<img src="' . $logo_path . '"  width="100%" height="auto" alt="ePayco" />';
   $title = uc_epayco_get_method_title();
   switch (uc_epayco_get_show_logo()) {
     case 1:
-    $show = $logo;
-    break;
+      $show = $logo;
+      break;
     case 2:
-    $show = $title;
-    break;
+      $show = $title;
+      break;
     default:
-    $show =  $title . '<br> ' .$logo ;
-    break;
+      $show = $title . '<br>' . $logo;
+      break;
   }
   return $show;
 }
