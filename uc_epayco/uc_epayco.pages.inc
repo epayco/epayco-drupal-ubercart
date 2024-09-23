@@ -2,9 +2,9 @@
 
 function _uc_epayco_checkout_page() {
 if ($_REQUEST["p_lang"] == 'EN') {
-    $epaycoButtonImage = 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color-Ingles.png';
+    $epaycoButtonImage = 'https://multimedia-epayco.s3.amazonaws.com/plugins-sdks/Boton-color-Ingles.png';
 }else{
-    $epaycoButtonImage = 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color1.png';
+    $epaycoButtonImage = 'https://multimedia-epayco.s3.amazonaws.com/plugins-sdks/Boton-color-espanol.png';
 }
 $output = t('ePayco Checkout:');
 $output .= sprintf('
