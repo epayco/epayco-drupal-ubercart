@@ -295,8 +295,8 @@ msgid "My Store"
 msgstr "Mi Tienda"
 
 #: uc_epayco.module:274
-msgid "Payment with Savings or Checking account."
-msgstr "Pago con Cuenta corriente y Cuenta de ahorros."
+msgid "Pay with a national and international credit/debit card, PSE, Daviplata, Nequi, Paypal, Cash, Safetypay and many more."
+msgstr "Paga con Tarjeta de crédito/débito nacional e internacional, PSE, Daviplata, Nequi, Paypal, Efectivo, Safetypay y muchos más."
 
 #: uc_epayco.module:364
 msgid "Colombian Peso"

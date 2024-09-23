@@ -301,7 +301,7 @@ function uc_epayco_method($op, $arg1 = NULL, $form = NULL, &$form_state = NULL) 
 
 function uc_epayco_get_title() {
   $module_path = drupal_get_path('module', 'uc_epayco');
-  $logo_path = base_path() . $module_path . '/img/paymentLogo.svg';
+  $logo_path = base_path() . $module_path . 'https://multimedia-epayco.s3.amazonaws.com/plugins-sdks/paymentLogo.svg';
   $logo = '<img src="' . $logo_path . '"  width="100%" height="auto" alt="ePayco" />';
   $title = uc_epayco_get_method_title();
   switch (uc_epayco_get_show_logo()) {
@@ -357,7 +357,7 @@ function uc_epayco_get_iva_tax_id() {
 }
 
 function uc_epayco_get_method_title() {
-  return variable_get('uc_epayco_method_title', t('Payment with Savings or Checking account ePayco.'));
+  return variable_get('uc_epayco_method_title', t('Paga Con ePayco.'));
 }
 
 function uc_epayco_get_show_logo() {
