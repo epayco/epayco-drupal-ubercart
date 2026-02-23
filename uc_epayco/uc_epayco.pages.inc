@@ -1,145 +1,241 @@
 <?php
 
 function _uc_epayco_checkout_page() {
-if ($_REQUEST["p_lang"] == 'EN') {
-    $epaycoButtonImage = 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color-Ingles.png';
-}else{
-    $epaycoButtonImage = 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color1.png';
-}
-$output = t('ePayco Checkout:');
-$output .= sprintf('
-                    <div class="loader-container">
-                        <div class="loading"></div>
-                    </div>
-                    <p>       
-                     <center>
-                        <a id="btn_epayco" href="#">
-                            <img src="'.$epaycoButtonImage.'">
-                        </a>
-                     </center> 
-                   </p>
-                    <script
-                       src="'.$_REQUEST["url_checkout"].'">
-                    </script>
-                    <script> var handler = ePayco.checkout.configure({
-                        key: "%s",
-                        test: "%s"
-                    })
-                    var date = new Date().getTime();
-                    var data = {
-                        name: "%s",
-                        description: "%s",
-                        invoice: "%s",
-                        currency: "%s",
-                        amount: "%s".toString(),
-                        tax_base: "%s".toString(),
-                        tax: "%s".toString(),
-                        taxIco: "%s".toString(),
-                        country: "%s",
-                        lang: "%s",
-                        external: "%s",
-                        confirmation: "%s",
-                        response: "%s",
-                        name_billing: "%s",
-                        address_billing: "%s",
-                        email_billing: "%s",
-                        mobilephone_billing: "%s",
-                        autoclick: "true",
-                        ip: "%s",
-                        test: "%s".toString(),
-                        extras_epayco:{extra5:"P35"}
+  $lang = isset($_REQUEST["lang_checkout"]) ? $_REQUEST["lang_checkout"] : 'es';
+  $epaycoButtonImage = ($lang == 'EN') 
+    ? 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color-Ingles.png'
+    : 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color1.png';
+
+  $output = t('ePayco Checkout:');
+  $output .= '
+  <div id="wrap">
+    <div class="oe_structure oe_empty">
+      <div class="container" style="text-align: center;">
+        <div class="loader-container">
+          <div class="loading"></div>
+        </div>
+        <p style="text-align: center;" class="epayco-title">
+          <span class="animated-points" id="loading-payments">Cargando...</span>
+          <br/>
+          <small class="epayco-subtitle"></small>
+        </p>
+        <center>
+          <a id="btn_epayco" href="#">
+            <img src="' . $epaycoButtonImage . '" style="border-width:0px;" />
+          </a>
+        </center>
+        <div id="form-button-container">
+          <form>
+            <input type="hidden" name="epayco_token" value="' . htmlspecialchars($_REQUEST["epayco_token"]) . '"/>
+            <input type="hidden" name="amount" value="' . htmlspecialchars($_REQUEST["amount"]) . '"/>
+            <input type="hidden" name="tax" value="' . htmlspecialchars($_REQUEST["tax"]) . '"/>
+            <input type="hidden" name="base_tax" value="' . htmlspecialchars($_REQUEST["base_tax"]) . '"/>
+            <input type="hidden" name="currency" value="' . htmlspecialchars($_REQUEST["currency"]) . '"/>
+            <input type="hidden" name="email" value="' . htmlspecialchars($_REQUEST["email"]) . '"/>
+            <input type="hidden" name="firstname" value="' . htmlspecialchars($_REQUEST["firstname"]) . '"/>
+            <input type="hidden" name="reference" value="' . htmlspecialchars($_REQUEST["reference"]) . '"/>
+            <input type="hidden" name="lang_checkout" value="' . htmlspecialchars($_REQUEST["lang_checkout"]) . '"/>
+            <input type="hidden" name="checkout_external" value="' . htmlspecialchars($_REQUEST["checkout_external"]) . '"/>
+            <input type="hidden" name="test" value="' . htmlspecialchars($_REQUEST["test"]) . '"/>
+            <input type="hidden" name="notify_url" value="' . htmlspecialchars($_REQUEST["notify_url"]) . '"/>
+            <input type="hidden" name="return_url" value="' . htmlspecialchars($_REQUEST["return_url"]) . '"/>
+            <input type="hidden" name="extra2" value="' . htmlspecialchars($_REQUEST["extra2"]) . '"/>
+            <input type="hidden" name="extra3" value="' . htmlspecialchars($_REQUEST["extra3"]) . '"/>
+            <input type="hidden" name="extra4" value="' . htmlspecialchars($_REQUEST["extra4"]) . '"/>
+            <input type="hidden" name="address" value="' . htmlspecialchars($_REQUEST["address"]) . '"/>
+            <input type="hidden" name="description" value="' . htmlspecialchars($_REQUEST["description"]) . '"/>
+            <input type="hidden" name="country" value="' . htmlspecialchars($_REQUEST["country"]) . '"/>
+            <input type="hidden" name="ip" value="' . htmlspecialchars($_REQUEST["ip"]) . '"/>
+            
+            <script src="https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod-v2.js"></script>
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+            <script type="text/javascript">
+            (async function () {
+              let epayco_token = document.getElementsByName("epayco_token")[0].value;
+              let amount = document.getElementsByName("amount")[0].value;
+              let tax = document.getElementsByName("tax")[0].value;
+              let base_tax = document.getElementsByName("base_tax")[0].value;
+              let currency = document.getElementsByName("currency")[0].value;
+              let email = document.getElementsByName("email")[0].value;
+              let firstname = document.getElementsByName("firstname")[0].value;
+              let reference = document.getElementsByName("reference")[0].value;
+              let lang = document.getElementsByName("lang_checkout")[0].value;
+              let checkout_external = document.getElementsByName("checkout_external")[0].value;
+              let test = document.getElementsByName("test")[0].value;
+              let notify_url = document.getElementsByName("notify_url")[0].value;
+              let return_url = document.getElementsByName("return_url")[0].value;
+              let extra2 = document.getElementsByName("extra2")[0].value;
+              let extra3 = document.getElementsByName("extra3")[0].value;
+              let extra4 = document.getElementsByName("extra4")[0].value;
+              let address = document.getElementsByName("address")[0].value;
+              let description = document.getElementsByName("description")[0].value;
+              let country = document.getElementsByName("country")[0].value;
+              let ip = document.getElementsByName("ip")[0].value;
+              
+              var checkout_lang = lang == "es" || lang == "es_CO" ? "es" : "en";
+              
+              if(checkout_lang == "es"){
+                document.getElementById("loading-payments").innerText = "Cargando...";
+              } else {
+                document.getElementById("loading-payments").innerText = "Loading...";
+              }
+
+              var data = {
+                checkout_version: "2",
+                name: reference.substring(0, 50),
+                description: description.substring(0, 50),
+                invoice: reference,
+                currency: currency.toLowerCase(),
+                amount: parseFloat(amount),
+                taxBase: parseFloat(base_tax),
+                tax: parseFloat(tax),
+                taxIco: parseFloat(0),
+                country: country,
+                lang: checkout_lang,
+                confirmation: notify_url,
+                response: return_url,
+                billing: {
+                  name: firstname,
+                  address: address,
+                  email: email,
+                },
+                autoclick: true,
+                ip: ip,
+                test: test.toString() === "true",
+                extras: {
+                  extra2: extra2,
+                  extra3: extra3,
+                  extra4: extra4
+                },
+                extrasEpayco: {
+                  extra5: "P32"
+                },
+                method: "POST",
+                autoClick: false,
+                methodsDisable: [],
+                dues: 1,
+                noRedirectOnClose: true,
+                forceResponse: false,
+                uniqueTransactionPerBill: false,
+                config: {}
+              };
+
+              var openCheckout = function () {
+                var btnPagar = document.getElementById("btn_epayco");
+                if (btnPagar) {
+                  btnPagar.classList.add("disabled");
+                }
+                if (localStorage.getItem("invoicePayment") == null) {
+                  localStorage.setItem("invoicePayment", data.invoice);
+                  makePayment(epayco_token, data, checkout_external == "true");
+                } else {
+                  if (localStorage.getItem("invoicePayment") != data.invoice) {
+                    localStorage.removeItem("invoicePayment");
+                    localStorage.setItem("invoicePayment", data.invoice);
+                    makePayment(epayco_token, data, checkout_external == "true");
+                  } else {
+                    makePayment(epayco_token, data, checkout_external == "true");
+                  }
+                }
+              };
+
+              var makePayment = async function (token_epayco, info, external) {
+                const headers = { "Content-Type": "application/json" };
+                if (token_epayco) {
+                  headers["Authorization"] = "Bearer " + token_epayco;
+                }
+                
+                try {
+                  const response = await fetch("https://eks-apify-service.epayco.io/payment/session/create", {
+                    method: "POST",
+                    body: JSON.stringify(info),
+                    headers: headers
+                  });
+                  
+                  const responseText = await response.text();
+                  
+                  if (!response.ok) {
+                    throw new Error("HTTP error! status: " + response.status + " - " + responseText);
+                  }
+                  
+                  const session = JSON.parse(responseText);
+                  
+                  if (session.success && session.data && session.data.sessionId) {
+                    const sessionId = session.data.sessionId;
+                    localStorage.removeItem("sessionPayment");
+                    localStorage.setItem("sessionPayment", sessionId);
+                    
+                    // Verificar que ePayco checkout esté disponible
+                    if (!window.ePayco || !window.ePayco.checkout) {
+                      throw new Error("ePayco checkout library not loaded");
                     }
-                    const apiKey = "%s";
-                    const privateKey = "%s";
-                    data.extra1 = "%s";
-                    data.extra2 = "%s";
-                    data.extra3 = "%s";
-                    data.extra4 = "%s";
-                    var openNewChekout = function () {
-                        if(localStorage.getItem("invoicePayment") == null){
-                            localStorage.setItem("invoicePayment", data.invoice);
-                            makePayment(privateKey,apiKey,data, data.external == "true"?true:false)
-                        }else{
-                            if(localStorage.getItem("invoicePayment") != data.invoice){
-                                localStorage.removeItem("invoicePayment");
-                                localStorage.setItem("invoicePayment", data.invoice);
-                                makePayment(privateKey,apiKey,data, data.external == "true"?true:false)
-                            }else{
-                                makePayment(privateKey,apiKey,data, data.external == "true"?true:false)
-                            }
-                        }
+                    
+                    const checkout = window.ePayco.checkout.configure({
+                      sessionId: sessionId,
+                      type: external ? "standard" : "onepage",
+                      test: info.test
+                    });
+
+                    // Event handlers
+                    checkout.onCreated(() => {
+                      console.log("Evento cuando se crea el flujo transaccional");
+                    });
+
+                    checkout.onErrors(errors => {
+                      console.log("Evento que notifica un error en la integración");
+                      console.error(errors);
+                    });
+
+                    checkout.onClosed(() => {
+                      console.log("Evento que notifica cuando se cierra el checkout");
+                      var btnPagar = document.getElementById("btn_epayco");
+                      if (btnPagar) {
+                        btnPagar.classList.remove("disabled");
+                      }
+                    });
+                    
+                    if (checkout && typeof checkout.open === "function") {
+                      checkout.open();
+                    } else {
+                      console.error("Error: checkout.open no está disponible");
+                      console.log("checkout object:", checkout);
                     }
-                    var makePayment = function (privatekey, apikey, info, external) {
-                        const headers = { "Content-Type": "application/json" } ;
-                        headers["privatekey"] = privatekey;
-                        headers["apikey"] = apikey;
-                        var payment =   function (){
-                            return  fetch("https://cms.epayco.co/checkout/payment/session", {
-                                method: "POST",
-                                body: JSON.stringify(info),
-                                headers
-                            })
-                                .then(res =>  res.json())
-                                .catch(err => err);
-                        }
-                        payment()
-                            .then(session => {
-                                if(session.data.sessionId != undefined){
-                                    localStorage.removeItem("sessionPayment");
-                                    localStorage.setItem("sessionPayment", session.data.sessionId);
-                                    const handlerNew = window.ePayco.checkout.configure({
-                                        sessionId: session.data.sessionId,
-                                        external: external,
-                                    });
-                                    handlerNew.openNew()
-                                }else{
-                                    handler.open(data);
-                                }
-                            })
-                            .catch(error => {
-                                error.message;
-                            });
-                    }
-                    var openChekout = function () {
-                        openNewChekout()
-                    }
-                    var bntPagar = document.getElementById("btn_epayco");
-                    bntPagar.addEventListener("click", openChekout);
-            	    openChekout()
-                </script>
-                </form>
-                </center>
-        ',  trim($_REQUEST["public_key"]),
-            $_REQUEST["p_test_request"],
-            $_REQUEST["p_description"],
-            $_REQUEST["p_description"],
-            $_REQUEST["p_extra4"],
-            $_REQUEST["p_currency_code"],
-            $_REQUEST["p_amount"],
-            $_REQUEST["p_amount_base"],
-            $_REQUEST["p_tax"],
-            '0',
-            $_REQUEST["p_country_code"],
-            $_REQUEST["p_lang"],
-            $_REQUEST["p_type_checkout"],
-            $_REQUEST["p_url_confirmation"],
-            $_REQUEST["p_url_response"],
-            $_REQUEST["p_billing_name"],
-            '',
-            $_REQUEST["p_billing_email"],
-            $_REQUEST["p_billing_cellphone"],
-            $_REQUEST["ip"],
-            $_REQUEST["p_test_request"],
-            trim($_REQUEST["public_key"]),
-            trim($_REQUEST["private_key"]),
-            $_REQUEST["p_extra1"],
-            $_REQUEST["p_extra2"],
-            $_REQUEST["p_extra3"],
-            $_REQUEST["p_extra4"]
-        );
+                  } else {
+                    console.error("Error: Respuesta inválida del servidor o sessionId no encontrado.", session);
+                    alert("Error al inicializar el checkout. Por favor, inténtelo de nuevo.");
+                  }
+                } catch (error) {
+                  console.error("Error al procesar el pago:", error);
+                  alert("Error al procesar el pago: " + error.message);
+                } finally {
+                  var btnPagar = document.getElementById("btn_epayco");
+                  if (btnPagar) {
+                    btnPagar.classList.remove("disabled");
+                  }
+                }
+              };
+
+              var btnPagar = document.getElementById("btn_epayco");
+              if (btnPagar) {
+                btnPagar.addEventListener("click", openCheckout);
+              }
+              openCheckout();
+              
+              window.onload = function () {
+                document.addEventListener("contextmenu", function (e) {
+                  e.preventDefault();
+                }, false);
+              };
+            })();
+            </script>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  ';
 
   return $output;
-
 }
 
 
@@ -154,7 +250,7 @@ function _uc_epayco_response_page() {
 
 
  $ref_payco=$response['ref_payco'];
- $url = 'https://secure.epayco.co/validation/v1/reference/'.$ref_payco;
+ $url = 'https://eks-checkout-service.epayco.io/validation/v1/reference/'.$ref_payco;
   $ch = curl_init();
   $timeout = 5;
   $user_agent='Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0';
