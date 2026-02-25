@@ -47,7 +47,7 @@ function _uc_epayco_checkout_page() {
             <input type="hidden" name="country" value="' . htmlspecialchars($_REQUEST["country"]) . '"/>
             <input type="hidden" name="ip" value="' . htmlspecialchars($_REQUEST["ip"]) . '"/>
             
-            <script src="https://checkout.epayco.co/checkout-green-v2.js"></script>
+            <script src="https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod-v2.j"></script>
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
             <script type="text/javascript">
             (async function () {
@@ -146,7 +146,7 @@ function _uc_epayco_checkout_page() {
                 }
                 
                 try {
-                  const response = await fetch("https://apify.epayco.co/payment/session/create", {
+                  const response = await fetch("https://eks-apify-service.epayco.io/payment/session/create", {
                     method: "POST",
                     body: JSON.stringify(info),
                     headers: headers
@@ -250,7 +250,7 @@ function _uc_epayco_response_page() {
 
 
  $ref_payco=$response['ref_payco'];
- $url = 'https://secure.epayco.co/validation/v1/reference/'.$ref_payco;
+ $url = 'https://eks-ms-checkout-transaction-service.epayco.io/validation/v1/reference/'.$ref_payco;
   $ch = curl_init();
   $timeout = 5;
   $user_agent='Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0';
@@ -335,6 +335,7 @@ function _uc_epayco_response_page() {
         $comment = t("Order Canceled.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($validationData['x_extra4'], 'canceled');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id canceled. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -350,6 +351,7 @@ function _uc_epayco_response_page() {
         $comment = t("Order Rejected.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($validationData['x_extra4'], 'canceled');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -357,6 +359,7 @@ function _uc_epayco_response_page() {
         $comment = t("Order Rejected.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($validationData['x_extra4'], 'canceled');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -381,6 +384,7 @@ function _uc_epayco_response_page() {
         uc_order_update_status($validationData['x_extra4'], 'abandoned');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'abandoned');
         uc_cart_empty($validationData['x_extra4']);
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -389,6 +393,7 @@ function _uc_epayco_response_page() {
         uc_order_update_status($validationData['x_extra4'], 'abandoned');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'abandoned');
         uc_cart_empty($validationData['x_extra4']);
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -396,6 +401,7 @@ function _uc_epayco_response_page() {
         $comment = t("Order Canceled.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($validationData['x_extra4'], 'canceled');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id canceled. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -403,6 +409,7 @@ function _uc_epayco_response_page() {
         $comment = t("Order Rejected.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($validationData['x_extra4'], 'canceled');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -519,6 +526,7 @@ function _uc_epayco_confirmation_page() {
         uc_order_update_status($response['x_extra4'], 'canceled');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'canceled');
         uc_payment_enter($response['x_extra4'], 'epayco', $response['x_amount'], 0, NULL, $comment);
+        uc_epayco_restore_stock($order);
         echo "Order Canceled.";
         watchdog('ePayco', "Order !order_id canceled. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -536,6 +544,7 @@ function _uc_epayco_confirmation_page() {
         $comment = t("Order Rejected.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($response['x_extra4'], 'canceled');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         echo "Order Rejected.";
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -544,6 +553,7 @@ function _uc_epayco_confirmation_page() {
         $comment = t("Order Rejected.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($response['x_extra4'], 'canceled');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         echo "Order Rejected.";
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -571,6 +581,7 @@ function _uc_epayco_confirmation_page() {
         uc_order_update_status($response['x_extra4'], 'abandoned');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'abandoned');
         uc_cart_empty($response['x_extra4']);
+        uc_epayco_restore_stock($order);
         echo "Order Processing.";
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -580,6 +591,7 @@ function _uc_epayco_confirmation_page() {
         uc_order_update_status($response['x_extra4'], 'abandoned');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'abandoned');
         uc_cart_empty($response['x_extra4']);
+        uc_epayco_restore_stock($order);
         echo "Order Processing.";
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -589,6 +601,7 @@ function _uc_epayco_confirmation_page() {
         uc_order_update_status($response['x_extra4'], 'canceled');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'canceled');
         uc_payment_enter($response['x_extra4'], 'epayco', $response['x_amount'], 0, NULL, $comment);
+        uc_epayco_restore_stock($order);
         echo "Order Canceled.";
         watchdog('ePayco', "Order !order_id canceled. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -598,6 +611,7 @@ function _uc_epayco_confirmation_page() {
         uc_order_update_status($response['x_extra4'], 'canceled');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'canceled');
         uc_payment_enter($response['x_extra4'], 'epayco', $response['x_amount'], 0, NULL, $comment);
+        uc_epayco_restore_stock($order);
         echo "Order Canceled.";
         watchdog('ePayco', "Order !order_id canceled. ePayco # !reference_pol", $watchdog_variables);
         break;

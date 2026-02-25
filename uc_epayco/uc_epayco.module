@@ -4,8 +4,8 @@
  *    Constant Definitions    *
  ******************************/
 
-define('UC_EPAYCO_LIVEURL', 'https://checkout.epayco.co/checkout-green-v2.js');
-define('UC_EPAYCO_TESTURL', 'https://checkout.epayco.co/checkout-green-v2.js');
+define('UC_EPAYCO_LIVEURL', 'https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod-v2.js');
+define('UC_EPAYCO_TESTURL', 'https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod-v2.js');
 
 /************************
  *     Drupal Hooks     *
@@ -146,7 +146,7 @@ function uc_epayco_form_alter(&$form, &$form_state, $form_id) {
         );
       }
       
-      $form['#suffix'] = '<script src="https://checkout.epayco.co/checkout-green-v2.js"></script>
+      $form['#suffix'] = '<script src="https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod-v2.js"></script>
                          <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>';
 
       $form['#action'] = url('cart/uc_epayco/checkout', array('absolute' => TRUE));
@@ -544,10 +544,152 @@ function uc_epayco_get_bearer_token() {
 }
 
 /**
+ * Restaura el inventario para transacciones rechazadas
+ * @param $order Objeto de la orden
+ */
+function uc_epayco_restore_stock($order) {
+  if (!$order || empty($order->products)) {
+    echo "\n✗ ERROR: No hay orden o productos para restaurar stock\n";
+    watchdog('uc_epayco', 'ERROR: No hay orden o productos para restaurar stock', array(), WATCHDOG_ERROR);
+    return FALSE;
+  }
+  
+  echo "\n\n========== INICIO RESTAURACION DE STOCK ==========\n";
+  echo "Orden ID: " . $order->order_id . "\n";
+  echo "Total de productos: " . count($order->products) . "\n";
+  
+  // Verificar si el módulo uc_stock está habilitado
+  $uc_stock_enabled = module_exists('uc_stock');
+  echo "\n📦 Módulo uc_stock activo: " . ($uc_stock_enabled ? "SÍ ✓" : "NO ✗") . "\n";
+  
+  if (!$uc_stock_enabled) {
+    echo "⚠ ADVERTENCIA: El módulo uc_stock no está habilitado. Intentando acceso directo a BD...\n";
+    watchdog('uc_epayco', 'ADVERTENCIA: Módulo uc_stock no está activo. Intentando restaurar stock desde BD.', array(), WATCHDOG_WARNING);
+  }
+  
+  foreach ($order->products as $product) {
+    if (isset($product->nid) && isset($product->qty)) {
+      echo "\n--- Procesando Producto ---\n";
+      echo "NID: " . $product->nid . "\n";
+      echo "Título: " . $product->title . "\n";
+      echo "Cantidad a restaurar: " . $product->qty . "\n";
+      
+      $stock_before = NULL;
+      $stock_after = NULL;
+      
+      // Intentar con uc_stock si está habilitado
+      if ($uc_stock_enabled && function_exists('uc_stock_level')) {
+        echo "\n>> Intentando con uc_stock_level()...\n";
+        $stock_before = uc_stock_level($product->nid);
+        echo "Stock ANTES (uc_stock): ";
+        var_dump($stock_before);
+        
+        if ($stock_before !== FALSE && $stock_before !== NULL) {
+          echo ">> Llamando a uc_stock_adjust(NID: {$product->nid}, QTY: {$product->qty})\n";
+          $adjust_result = uc_stock_adjust($product->nid, $product->qty);
+          echo "Resultado de uc_stock_adjust: ";
+          var_dump($adjust_result);
+          
+          $stock_after = uc_stock_level($product->nid);
+          echo "Stock DESPUÉS (uc_stock): ";
+          var_dump($stock_after);
+        }
+      }
+      
+      // Si no funcionó con uc_stock o no está disponible, intentar desde BD
+      if ($stock_before === FALSE || $stock_before === NULL) {
+        echo "\n>> Intentando acceso directo a tabla uc_product_stock...\n";
+        
+        // Verificar si la tabla existe
+        $table_exists = db_table_exists('uc_product_stock');
+        echo "Tabla uc_product_stock existe: " . ($table_exists ? "SÍ ✓" : "NO ✗") . "\n";
+        
+        if ($table_exists) {
+          // Obtener stock ANTES
+          $stock_before = db_query(
+            "SELECT active FROM {uc_product_stock} WHERE nid = :nid",
+            array(':nid' => $product->nid)
+          )->fetchField();
+          
+          echo "Stock ANTES (desde BD): " . ($stock_before !== FALSE ? $stock_before : 'NO ENCONTRADO - Puede ser 0') . "\n";
+          
+          if ($stock_before === FALSE) {
+            $stock_before = 0; // Asumir 0 si no existe registro
+          }
+          
+          // Restaurar en BD
+          echo ">> Restaurando stock en BD...\n";
+          $new_stock = $stock_before + $product->qty;
+          
+          $update = db_update('uc_product_stock')
+            ->fields(array('active' => $new_stock))
+            ->condition('nid', $product->nid)
+            ->execute();
+          
+          echo "Registros actualizados: $update\n";
+          
+          if ($update == 0) {
+            echo "⚠ Ningún registro actualizado. Intentando insertar...\n";
+            try {
+              db_insert('uc_product_stock')
+                ->fields(array(
+                  'nid' => $product->nid,
+                  'active' => $product->qty,
+                ))
+                ->execute();
+              echo "✓ Registro insertado\n";
+              $stock_after = $product->qty;
+            } catch (Exception $e) {
+              echo "✗ Error al insertar: " . $e->getMessage() . "\n";
+              watchdog('uc_epayco', 'Error al insertar stock en BD: @error', array('@error' => $e->getMessage()), WATCHDOG_ERROR);
+            }
+          } else {
+            $stock_after = db_query(
+              "SELECT active FROM {uc_product_stock} WHERE nid = :nid",
+              array(':nid' => $product->nid)
+            )->fetchField();
+            echo "Stock DESPUÉS (desde BD): " . ($stock_after !== FALSE ? $stock_after : 'NO ENCONTRADO') . "\n";
+          }
+        } else {
+          echo "✗ ERROR: La tabla uc_product_stock no existe en la BD\n";
+          watchdog('uc_epayco', 'ERROR: Tabla uc_product_stock no existe en BD para restaurar stock del NID @nid', 
+            array('@nid' => $product->nid), WATCHDOG_ERROR);
+        }
+      }
+      
+      // Verificar si la restauración fue exitosa
+      if ($stock_after !== NULL && is_numeric($stock_before) && is_numeric($stock_after)) {
+        if ($stock_after > $stock_before) {
+          echo "\n✓ Stock RESTAURADO correctamente (+{$product->qty})\n";
+          watchdog('uc_epayco', '@title (NID @nid) | Hay @before, después quedó en @after | Orden #@order_id', 
+            array('@title' => $product->title, '@nid' => $product->nid, '@before' => $stock_before, '@after' => $stock_after, '@order_id' => $order->order_id), WATCHDOG_NOTICE);
+        } else {
+          echo "\n⚠ ADVERTENCIA: Stock no cambió o aumentó lo esperado (ANTES: $stock_before, DESPUÉS: $stock_after)\n";
+          watchdog('uc_epayco', '@title (NID @nid) | Hay @before, no cambió a @after | Orden #@order_id', 
+            array('@title' => $product->title, '@nid' => $product->nid, '@before' => $stock_before, '@after' => $stock_after, '@order_id' => $order->order_id), WATCHDOG_WARNING);
+        }
+      } else {
+        echo "\n⚠ No fue posible validar la restauración de stock\n";
+        watchdog('uc_epayco', '@title (NID @nid) | No se pudo validar. Antes: @before, Después: @after | Orden #@order_id', 
+          array('@title' => $product->title, '@nid' => $product->nid, '@before' => ($stock_before !== NULL ? $stock_before : 'NULL'), '@after' => ($stock_after !== NULL ? $stock_after : 'NULL'), '@order_id' => $order->order_id), WATCHDOG_WARNING);
+      }
+      
+    } else {
+      echo "\n✗ ERROR: Producto sin NID o cantidad\n";
+      print_r($product);
+    }
+  }
+  
+  echo "\n========== FIN RESTAURACION DE STOCK ==========\n\n";
+  
+  return TRUE;
+}
+
+/**
  * Realiza una llamada a la API de ePayco usando cURL
  */
 function uc_epayco_realizar_llamada_api($path, $data = array(), $headers = array(), $method = 'POST') {
-  $url = 'https://apify.epayco.co/' . $path;
+  $url = 'https://eks-apify-service.epayco.io/' . $path;
 
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $url);
