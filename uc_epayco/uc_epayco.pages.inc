@@ -20,9 +20,10 @@ function _uc_epayco_checkout_page() {
           <small class="epayco-subtitle"></small>
         </p>
         <center>
-          <a id="btn_epayco" href="#">
+          <a id="btn_epayco" href="#" style="display: none;">
             <img src="' . $epaycoButtonImage . '" style="border-width:0px;" />
           </a>
+          <div id="error-container" style="display: none;"></div>
         </center>
         <div id="form-button-container">
           <form>
@@ -47,7 +48,7 @@ function _uc_epayco_checkout_page() {
             <input type="hidden" name="country" value="' . htmlspecialchars($_REQUEST["country"]) . '"/>
             <input type="hidden" name="ip" value="' . htmlspecialchars($_REQUEST["ip"]) . '"/>
             
-            <script src="https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod-v2.j"></script>
+            <script src="https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod-v2.js"></script>
             <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
             <script type="text/javascript">
             (async function () {
@@ -139,7 +140,7 @@ function _uc_epayco_checkout_page() {
                 }
               };
 
-              var makePayment = async function (token_epayco, info, external) {
+              var validateCheckout = async function (token_epayco, info, external) {
                 const headers = { "Content-Type": "application/json" };
                 if (token_epayco) {
                   headers["Authorization"] = "Bearer " + token_epayco;
@@ -153,12 +154,169 @@ function _uc_epayco_checkout_page() {
                   });
                   
                   const responseText = await response.text();
+                  let session;
                   
-                  if (!response.ok) {
-                    throw new Error("HTTP error! status: " + response.status + " - " + responseText);
+                  try {
+                    session = JSON.parse(responseText);
+                  } catch (e) {
+                    session = { success: false, data: { errors: responseText } };
                   }
                   
-                  const session = JSON.parse(responseText);
+                  if (!response.ok) {
+                    const apiErrorMessage = _extractErrorMessage(session);
+                    const statusText = response.statusText || "Error en la solicitud";
+                    
+                    // Mostrar error HTTP y detalles de la API
+                    let fullErrorMsg = "HTTP " + response.status + ": " + statusText;
+                    if (apiErrorMessage && apiErrorMessage !== "Error desconocido al procesar el checkout") {
+                      fullErrorMsg += "\n\nDetalles:\n" + apiErrorMessage;
+                    }
+                    
+                    throw new Error(fullErrorMsg);
+                  }
+                  
+                  if (session.success && session.data && session.data.sessionId) {
+                    return { success: true, session: session };
+                  } else {
+                    const errorMessage = _extractErrorMessage(session);
+                    throw new Error(errorMessage);
+                  }
+                } catch (error) {
+                  throw error;
+                }
+              };
+
+              var _extractErrorMessage = function (response) {
+                let errorMessage = "";
+                let fieldErrors = [];
+                
+                if (!response) {
+                  return "Error desconocido al procesar el checkout";
+                }
+                
+                // Buscar errores específicos en data.errors
+                if (response.data) {
+                  // Formato: data.errors (array)
+                  if (Array.isArray(response.data.errors)) {
+                    response.data.errors.forEach((error) => {
+                      if (error.field && error.errorMessage) {
+                        fieldErrors.push(error.field + ": " + error.errorMessage);
+                      } else if (error.errorMessage) {
+                        errorMessage += error.errorMessage + " | ";
+                      } else if (typeof error === "string") {
+                        errorMessage += error + " | ";
+                      } else if (error.message) {
+                        errorMessage += error.message + " | ";
+                      }
+                    });
+                  }
+                  // Formato: data.errors (string)
+                  else if (typeof response.data.errors === "string") {
+                    return response.data.errors;
+                  }
+                  
+                  // Formato: data.error.errores (array)
+                  if (response.data.error && Array.isArray(response.data.error.errores)) {
+                    response.data.error.errores.forEach(error => {
+                      if (error.field && error.errorMessage) {
+                        fieldErrors.push(error.field + ": " + error.errorMessage);
+                      } else if (error.errorMessage) {
+                        errorMessage += error.errorMessage + " | ";
+                      } else if (typeof error === "string") {
+                        errorMessage += error + " | ";
+                      }
+                    });
+                  }
+                  
+                  // Buscar mensaje directo en data
+                  if (response.data.message && typeof response.data.message === "string") {
+                    if (!fieldErrors.length && !errorMessage) {
+                      return response.data.message;
+                    }
+                  }
+                  
+                  if (response.data.text && typeof response.data.text === "string") {
+                    if (!fieldErrors.length && !errorMessage) {
+                      return response.data.text;
+                    }
+                  }
+                  
+                  if (response.data.error && typeof response.data.error === "string") {
+                    if (!fieldErrors.length && !errorMessage) {
+                      return response.data.error;
+                    }
+                  }
+                }
+                
+                // Si encontramos errores específicos, retornarlos
+                if (fieldErrors.length > 0 || errorMessage.trim()) {
+                  if (fieldErrors.length > 0) {
+                    errorMessage = fieldErrors.join("\n") + (errorMessage ? "\n" + errorMessage : "");
+                  }
+                  errorMessage = errorMessage.replace(/ \| $/, "").trim();
+                  return errorMessage;
+                }
+                
+                // Fallback: Buscar en otros lugares
+                if (response.textResponse && typeof response.textResponse === "string") {
+                  return response.textResponse;
+                }
+                
+                if (response.message && typeof response.message === "string") {
+                  return response.message;
+                }
+                
+                if (response.text && typeof response.text === "string") {
+                  return response.text;
+                }
+                
+                return "Error desconocido al procesar el checkout";
+              };
+
+              var showErrorMessage = function (errorMsg) {
+                var errorContainer = document.getElementById("error-container");
+                var btnPagar = document.getElementById("btn_epayco");
+                
+                if (errorContainer) {
+                  // Convertir saltos de línea en <br>
+                  var formattedMsg = errorMsg.replace(/\n/g, "<br>");
+                  
+                  errorContainer.innerHTML = 
+                    "<div style=\"text-align: center;\">" +
+                    "  <img style=\"width: 80px;\" src=\"https://multimedia-epayco-preprod.s3.us-east-1.amazonaws.com/plugins-sdks/warning.png\" alt=\"\" />" +
+                    "  <p>" + formattedMsg + "</p>" +
+                    "</div>";
+                  errorContainer.style.display = "block";
+                }
+                
+                if (btnPagar) {
+                  btnPagar.style.display = "none";
+                }
+              };
+
+              var showPaymentButton = function () {
+                var btnPagar = document.getElementById("btn_epayco");
+                var errorContainer = document.getElementById("error-container");
+                
+                if (errorContainer) {
+                  errorContainer.style.display = "none";
+                  errorContainer.innerHTML = "";
+                }
+                
+                if (btnPagar) {
+                  btnPagar.style.display = "block";
+                }
+              };
+
+              var makePayment = async function (token_epayco, info, external) {
+                var btnPagar = document.getElementById("btn_epayco");
+                if (btnPagar) {
+                  btnPagar.classList.add("disabled");
+                }
+                
+                try {
+                  const validation = await validateCheckout(token_epayco, info, external);
+                  const session = validation.session;
                   
                   if (session.success && session.data && session.data.sessionId) {
                     const sessionId = session.data.sessionId;
@@ -167,7 +325,7 @@ function _uc_epayco_checkout_page() {
                     
                     // Verificar que ePayco checkout esté disponible
                     if (!window.ePayco || !window.ePayco.checkout) {
-                      throw new Error("ePayco checkout library not loaded");
+                      throw new Error("Librería de checkout de ePayco no cargada");
                     }
                     
                     const checkout = window.ePayco.checkout.configure({
@@ -178,17 +336,13 @@ function _uc_epayco_checkout_page() {
 
                     // Event handlers
                     checkout.onCreated(() => {
-                      console.log("Evento cuando se crea el flujo transaccional");
                     });
 
                     checkout.onErrors(errors => {
-                      console.log("Evento que notifica un error en la integración");
                       console.error(errors);
                     });
 
                     checkout.onClosed(() => {
-                      console.log("Evento que notifica cuando se cierra el checkout");
-                      var btnPagar = document.getElementById("btn_epayco");
                       if (btnPagar) {
                         btnPagar.classList.remove("disabled");
                       }
@@ -198,17 +352,11 @@ function _uc_epayco_checkout_page() {
                       checkout.open();
                     } else {
                       console.error("Error: checkout.open no está disponible");
-                      console.log("checkout object:", checkout);
                     }
-                  } else {
-                    console.error("Error: Respuesta inválida del servidor o sessionId no encontrado.", session);
-                    alert("Error al inicializar el checkout. Por favor, inténtelo de nuevo.");
                   }
                 } catch (error) {
-                  console.error("Error al procesar el pago:", error);
-                  alert("Error al procesar el pago: " + error.message);
+                  showErrorMessage(error.message);
                 } finally {
-                  var btnPagar = document.getElementById("btn_epayco");
                   if (btnPagar) {
                     btnPagar.classList.remove("disabled");
                   }
@@ -219,7 +367,28 @@ function _uc_epayco_checkout_page() {
               if (btnPagar) {
                 btnPagar.addEventListener("click", openCheckout);
               }
-              openCheckout();
+              
+              // Validar el checkout automáticamente al cargar y desplegar
+              (async function() {
+                try {
+                  const validation = await validateCheckout(epayco_token, data, checkout_external == "true");
+                  
+                  if (validation.success) {
+                    document.getElementById("loading-payments").innerText = 
+                      checkout_lang == "es" ? "Abriendo tu pago..." : "Opening your payment...";
+                    showPaymentButton();
+                    
+                    // Desplegar el checkout automáticamente después de 500ms
+                    setTimeout(function() {
+                      makePayment(epayco_token, data, checkout_external == "true");
+                    }, 500);
+                  }
+                } catch (error) {
+                  document.getElementById("loading-payments").innerText = 
+                    checkout_lang == "es" ? "Error" : "Error";
+                  showErrorMessage(error.message);
+                }
+              })();
               
               window.onload = function () {
                 document.addEventListener("contextmenu", function (e) {
