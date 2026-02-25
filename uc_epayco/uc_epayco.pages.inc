@@ -1,145 +1,410 @@
 <?php
 
 function _uc_epayco_checkout_page() {
-if ($_REQUEST["p_lang"] == 'EN') {
-    $epaycoButtonImage = 'https://multimedia-epayco.s3.amazonaws.com/plugins-sdks/Boton-color-Ingles.png';
-}else{
-    $epaycoButtonImage = 'https://multimedia-epayco.s3.amazonaws.com/plugins-sdks/Boton-color-espanol.png';
-}
-$output = t('ePayco Checkout:');
-$output .= sprintf('
-                    <div class="loader-container">
-                        <div class="loading"></div>
-                    </div>
-                    <p>       
-                     <center>
-                        <a id="btn_epayco" href="#">
-                            <img src="'.$epaycoButtonImage.'">
-                        </a>
-                     </center> 
-                   </p>
-                    <script
-                       src="'.$_REQUEST["url_checkout"].'">
-                    </script>
-                    <script> var handler = ePayco.checkout.configure({
-                        key: "%s",
-                        test: "%s"
-                    })
-                    var date = new Date().getTime();
-                    var data = {
-                        name: "%s",
-                        description: "%s",
-                        invoice: "%s",
-                        currency: "%s",
-                        amount: "%s".toString(),
-                        tax_base: "%s".toString(),
-                        tax: "%s".toString(),
-                        taxIco: "%s".toString(),
-                        country: "%s",
-                        lang: "%s",
-                        external: "%s",
-                        confirmation: "%s",
-                        response: "%s",
-                        name_billing: "%s",
-                        address_billing: "%s",
-                        email_billing: "%s",
-                        mobilephone_billing: "%s",
-                        autoclick: "true",
-                        ip: "%s",
-                        test: "%s".toString(),
-                        extras_epayco:{extra5:"P35"}
+  $lang = isset($_REQUEST["lang_checkout"]) ? $_REQUEST["lang_checkout"] : 'es';
+  $epaycoButtonImage = ($lang == 'EN') 
+    ? 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color-Ingles.png'
+    : 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color1.png';
+
+  $output = t('ePayco Checkout:');
+  $output .= '
+  <div id="wrap">
+    <div class="oe_structure oe_empty">
+      <div class="container" style="text-align: center;">
+        <div class="loader-container">
+          <div class="loading"></div>
+        </div>
+        <p style="text-align: center;" class="epayco-title">
+          <span class="animated-points" id="loading-payments">Cargando...</span>
+          <br/>
+          <small class="epayco-subtitle"></small>
+        </p>
+        <center>
+          <a id="btn_epayco" href="#" style="display: none;">
+            <img src="' . $epaycoButtonImage . '" style="border-width:0px;" />
+          </a>
+          <div id="error-container" style="display: none;"></div>
+        </center>
+        <div id="form-button-container">
+          <form>
+            <input type="hidden" name="epayco_token" value="' . htmlspecialchars($_REQUEST["epayco_token"]) . '"/>
+            <input type="hidden" name="amount" value="' . htmlspecialchars($_REQUEST["amount"]) . '"/>
+            <input type="hidden" name="tax" value="' . htmlspecialchars($_REQUEST["tax"]) . '"/>
+            <input type="hidden" name="base_tax" value="' . htmlspecialchars($_REQUEST["base_tax"]) . '"/>
+            <input type="hidden" name="currency" value="' . htmlspecialchars($_REQUEST["currency"]) . '"/>
+            <input type="hidden" name="email" value="' . htmlspecialchars($_REQUEST["email"]) . '"/>
+            <input type="hidden" name="firstname" value="' . htmlspecialchars($_REQUEST["firstname"]) . '"/>
+            <input type="hidden" name="reference" value="' . htmlspecialchars($_REQUEST["reference"]) . '"/>
+            <input type="hidden" name="lang_checkout" value="' . htmlspecialchars($_REQUEST["lang_checkout"]) . '"/>
+            <input type="hidden" name="checkout_external" value="' . htmlspecialchars($_REQUEST["checkout_external"]) . '"/>
+            <input type="hidden" name="test" value="' . htmlspecialchars($_REQUEST["test"]) . '"/>
+            <input type="hidden" name="notify_url" value="' . htmlspecialchars($_REQUEST["notify_url"]) . '"/>
+            <input type="hidden" name="return_url" value="' . htmlspecialchars($_REQUEST["return_url"]) . '"/>
+            <input type="hidden" name="extra2" value="' . htmlspecialchars($_REQUEST["extra2"]) . '"/>
+            <input type="hidden" name="extra3" value="' . htmlspecialchars($_REQUEST["extra3"]) . '"/>
+            <input type="hidden" name="extra4" value="' . htmlspecialchars($_REQUEST["extra4"]) . '"/>
+            <input type="hidden" name="address" value="' . htmlspecialchars($_REQUEST["address"]) . '"/>
+            <input type="hidden" name="description" value="' . htmlspecialchars($_REQUEST["description"]) . '"/>
+            <input type="hidden" name="country" value="' . htmlspecialchars($_REQUEST["country"]) . '"/>
+            <input type="hidden" name="ip" value="' . htmlspecialchars($_REQUEST["ip"]) . '"/>
+            
+            <script src="https://epayco-checkout-testing.s3.amazonaws.com/checkout.preprod-v2.js"></script>
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+            <script type="text/javascript">
+            (async function () {
+              let epayco_token = document.getElementsByName("epayco_token")[0].value;
+              let amount = document.getElementsByName("amount")[0].value;
+              let tax = document.getElementsByName("tax")[0].value;
+              let base_tax = document.getElementsByName("base_tax")[0].value;
+              let currency = document.getElementsByName("currency")[0].value;
+              let email = document.getElementsByName("email")[0].value;
+              let firstname = document.getElementsByName("firstname")[0].value;
+              let reference = document.getElementsByName("reference")[0].value;
+              let lang = document.getElementsByName("lang_checkout")[0].value;
+              let checkout_external = document.getElementsByName("checkout_external")[0].value;
+              let test = document.getElementsByName("test")[0].value;
+              let notify_url = document.getElementsByName("notify_url")[0].value;
+              let return_url = document.getElementsByName("return_url")[0].value;
+              let extra2 = document.getElementsByName("extra2")[0].value;
+              let extra3 = document.getElementsByName("extra3")[0].value;
+              let extra4 = document.getElementsByName("extra4")[0].value;
+              let address = document.getElementsByName("address")[0].value;
+              let description = document.getElementsByName("description")[0].value;
+              let country = document.getElementsByName("country")[0].value;
+              let ip = document.getElementsByName("ip")[0].value;
+              
+              var checkout_lang = lang == "es" || lang == "es_CO" ? "es" : "en";
+              
+              if(checkout_lang == "es"){
+                document.getElementById("loading-payments").innerText = "Cargando...";
+              } else {
+                document.getElementById("loading-payments").innerText = "Loading...";
+              }
+
+              var data = {
+                checkout_version: "2",
+                name: reference.substring(0, 50),
+                description: description.substring(0, 50),
+                invoice: reference,
+                currency: currency.toLowerCase(),
+                amount: parseFloat(amount),
+                taxBase: parseFloat(base_tax),
+                tax: parseFloat(tax),
+                taxIco: parseFloat(0),
+                country: country,
+                lang: checkout_lang,
+                confirmation: notify_url,
+                response: return_url,
+                billing: {
+                  name: firstname,
+                  address: address,
+                  email: email,
+                },
+                autoclick: true,
+                ip: ip,
+                test: test.toString() === "true",
+                extras: {
+                  extra2: extra2,
+                  extra3: extra3,
+                  extra4: extra4
+                },
+                extrasEpayco: {
+                  extra5: "P32"
+                },
+                method: "POST",
+                autoClick: false,
+                methodsDisable: [],
+                dues: 1,
+                noRedirectOnClose: true,
+                forceResponse: false,
+                uniqueTransactionPerBill: false,
+                config: {}
+              };
+
+              var openCheckout = function () {
+                var btnPagar = document.getElementById("btn_epayco");
+                if (btnPagar) {
+                  btnPagar.classList.add("disabled");
+                }
+                if (localStorage.getItem("invoicePayment") == null) {
+                  localStorage.setItem("invoicePayment", data.invoice);
+                  makePayment(epayco_token, data, checkout_external == "true");
+                } else {
+                  if (localStorage.getItem("invoicePayment") != data.invoice) {
+                    localStorage.removeItem("invoicePayment");
+                    localStorage.setItem("invoicePayment", data.invoice);
+                    makePayment(epayco_token, data, checkout_external == "true");
+                  } else {
+                    makePayment(epayco_token, data, checkout_external == "true");
+                  }
+                }
+              };
+
+              var validateCheckout = async function (token_epayco, info, external) {
+                const headers = { "Content-Type": "application/json" };
+                if (token_epayco) {
+                  headers["Authorization"] = "Bearer " + token_epayco;
+                }
+                
+                try {
+                  const response = await fetch("https://eks-apify-service.epayco.io/payment/session/create", {
+                    method: "POST",
+                    body: JSON.stringify(info),
+                    headers: headers
+                  });
+                  
+                  const responseText = await response.text();
+                  let session;
+                  
+                  try {
+                    session = JSON.parse(responseText);
+                  } catch (e) {
+                    session = { success: false, data: { errors: responseText } };
+                  }
+                  
+                  if (!response.ok) {
+                    const apiErrorMessage = _extractErrorMessage(session);
+                    const statusText = response.statusText || "Error en la solicitud";
+                    
+                    // Mostrar error HTTP y detalles de la API
+                    let fullErrorMsg = "HTTP " + response.status + ": " + statusText;
+                    if (apiErrorMessage && apiErrorMessage !== "Error desconocido al procesar el checkout") {
+                      fullErrorMsg += "\n\nDetalles:\n" + apiErrorMessage;
                     }
-                    const apiKey = "%s";
-                    const privateKey = "%s";
-                    data.extra1 = "%s";
-                    data.extra2 = "%s";
-                    data.extra3 = "%s";
-                    data.extra4 = "%s";
-                    var openNewChekout = function () {
-                        if(localStorage.getItem("invoicePayment") == null){
-                            localStorage.setItem("invoicePayment", data.invoice);
-                            makePayment(privateKey,apiKey,data, data.external == "true"?true:false)
-                        }else{
-                            if(localStorage.getItem("invoicePayment") != data.invoice){
-                                localStorage.removeItem("invoicePayment");
-                                localStorage.setItem("invoicePayment", data.invoice);
-                                makePayment(privateKey,apiKey,data, data.external == "true"?true:false)
-                            }else{
-                                makePayment(privateKey,apiKey,data, data.external == "true"?true:false)
-                            }
-                        }
+                    
+                    throw new Error(fullErrorMsg);
+                  }
+                  
+                  if (session.success && session.data && session.data.sessionId) {
+                    return { success: true, session: session };
+                  } else {
+                    const errorMessage = _extractErrorMessage(session);
+                    throw new Error(errorMessage);
+                  }
+                } catch (error) {
+                  throw error;
+                }
+              };
+
+              var _extractErrorMessage = function (response) {
+                let errorMessage = "";
+                let fieldErrors = [];
+                
+                if (!response) {
+                  return "Error desconocido al procesar el checkout";
+                }
+                
+                // Buscar errores específicos en data.errors
+                if (response.data) {
+                  // Formato: data.errors (array)
+                  if (Array.isArray(response.data.errors)) {
+                    response.data.errors.forEach((error) => {
+                      if (error.field && error.errorMessage) {
+                        fieldErrors.push(error.field + ": " + error.errorMessage);
+                      } else if (error.errorMessage) {
+                        errorMessage += error.errorMessage + " | ";
+                      } else if (typeof error === "string") {
+                        errorMessage += error + " | ";
+                      } else if (error.message) {
+                        errorMessage += error.message + " | ";
+                      }
+                    });
+                  }
+                  // Formato: data.errors (string)
+                  else if (typeof response.data.errors === "string") {
+                    return response.data.errors;
+                  }
+                  
+                  // Formato: data.error.errores (array)
+                  if (response.data.error && Array.isArray(response.data.error.errores)) {
+                    response.data.error.errores.forEach(error => {
+                      if (error.field && error.errorMessage) {
+                        fieldErrors.push(error.field + ": " + error.errorMessage);
+                      } else if (error.errorMessage) {
+                        errorMessage += error.errorMessage + " | ";
+                      } else if (typeof error === "string") {
+                        errorMessage += error + " | ";
+                      }
+                    });
+                  }
+                  
+                  // Buscar mensaje directo en data
+                  if (response.data.message && typeof response.data.message === "string") {
+                    if (!fieldErrors.length && !errorMessage) {
+                      return response.data.message;
                     }
-                    var makePayment = function (privatekey, apikey, info, external) {
-                        const headers = { "Content-Type": "application/json" } ;
-                        headers["privatekey"] = privatekey;
-                        headers["apikey"] = apikey;
-                        var payment =   function (){
-                            return  fetch("https://cms.epayco.co/checkout/payment/session", {
-                                method: "POST",
-                                body: JSON.stringify(info),
-                                headers
-                            })
-                                .then(res =>  res.json())
-                                .catch(err => err);
-                        }
-                        payment()
-                            .then(session => {
-                                if(session.data.sessionId != undefined){
-                                    localStorage.removeItem("sessionPayment");
-                                    localStorage.setItem("sessionPayment", session.data.sessionId);
-                                    const handlerNew = window.ePayco.checkout.configure({
-                                        sessionId: session.data.sessionId,
-                                        external: external,
-                                    });
-                                    handlerNew.openNew()
-                                }else{
-                                    handler.open(data);
-                                }
-                            })
-                            .catch(error => {
-                                error.message;
-                            });
+                  }
+                  
+                  if (response.data.text && typeof response.data.text === "string") {
+                    if (!fieldErrors.length && !errorMessage) {
+                      return response.data.text;
                     }
-                    var openChekout = function () {
-                        openNewChekout()
+                  }
+                  
+                  if (response.data.error && typeof response.data.error === "string") {
+                    if (!fieldErrors.length && !errorMessage) {
+                      return response.data.error;
                     }
-                    var bntPagar = document.getElementById("btn_epayco");
-                    bntPagar.addEventListener("click", openChekout);
-            	    openChekout()
-                </script>
-                </form>
-                </center>
-        ',  trim($_REQUEST["public_key"]),
-            $_REQUEST["p_test_request"],
-            $_REQUEST["p_description"],
-            $_REQUEST["p_description"],
-            $_REQUEST["p_extra4"],
-            $_REQUEST["p_currency_code"],
-            $_REQUEST["p_amount"],
-            $_REQUEST["p_amount_base"],
-            $_REQUEST["p_tax"],
-            '0',
-            $_REQUEST["p_country_code"],
-            $_REQUEST["p_lang"],
-            $_REQUEST["p_type_checkout"],
-            $_REQUEST["p_url_confirmation"],
-            $_REQUEST["p_url_response"],
-            $_REQUEST["p_billing_name"],
-            '',
-            $_REQUEST["p_billing_email"],
-            $_REQUEST["p_billing_cellphone"],
-            $_REQUEST["ip"],
-            $_REQUEST["p_test_request"],
-            trim($_REQUEST["public_key"]),
-            trim($_REQUEST["private_key"]),
-            $_REQUEST["p_extra1"],
-            $_REQUEST["p_extra2"],
-            $_REQUEST["p_extra3"],
-            $_REQUEST["p_extra4"]
-        );
+                  }
+                }
+                
+                // Si encontramos errores específicos, retornarlos
+                if (fieldErrors.length > 0 || errorMessage.trim()) {
+                  if (fieldErrors.length > 0) {
+                    errorMessage = fieldErrors.join("\n") + (errorMessage ? "\n" + errorMessage : "");
+                  }
+                  errorMessage = errorMessage.replace(/ \| $/, "").trim();
+                  return errorMessage;
+                }
+                
+                // Fallback: Buscar en otros lugares
+                if (response.textResponse && typeof response.textResponse === "string") {
+                  return response.textResponse;
+                }
+                
+                if (response.message && typeof response.message === "string") {
+                  return response.message;
+                }
+                
+                if (response.text && typeof response.text === "string") {
+                  return response.text;
+                }
+                
+                return "Error desconocido al procesar el checkout";
+              };
+
+              var showErrorMessage = function (errorMsg) {
+                var errorContainer = document.getElementById("error-container");
+                var btnPagar = document.getElementById("btn_epayco");
+                
+                if (errorContainer) {
+                  // Convertir saltos de línea en <br>
+                  var formattedMsg = errorMsg.replace(/\n/g, "<br>");
+                  
+                  errorContainer.innerHTML = 
+                    "<div style=\"text-align: center;\">" +
+                    "  <img style=\"width: 80px;\" src=\"https://multimedia-epayco-preprod.s3.us-east-1.amazonaws.com/plugins-sdks/warning.png\" alt=\"\" />" +
+                    "  <p>" + formattedMsg + "</p>" +
+                    "</div>";
+                  errorContainer.style.display = "block";
+                }
+                
+                if (btnPagar) {
+                  btnPagar.style.display = "none";
+                }
+              };
+
+              var showPaymentButton = function () {
+                var btnPagar = document.getElementById("btn_epayco");
+                var errorContainer = document.getElementById("error-container");
+                
+                if (errorContainer) {
+                  errorContainer.style.display = "none";
+                  errorContainer.innerHTML = "";
+                }
+                
+                if (btnPagar) {
+                  btnPagar.style.display = "block";
+                }
+              };
+
+              var makePayment = async function (token_epayco, info, external) {
+                var btnPagar = document.getElementById("btn_epayco");
+                if (btnPagar) {
+                  btnPagar.classList.add("disabled");
+                }
+                
+                try {
+                  const validation = await validateCheckout(token_epayco, info, external);
+                  const session = validation.session;
+                  
+                  if (session.success && session.data && session.data.sessionId) {
+                    const sessionId = session.data.sessionId;
+                    localStorage.removeItem("sessionPayment");
+                    localStorage.setItem("sessionPayment", sessionId);
+                    
+                    // Verificar que ePayco checkout esté disponible
+                    if (!window.ePayco || !window.ePayco.checkout) {
+                      throw new Error("Librería de checkout de ePayco no cargada");
+                    }
+                    
+                    const checkout = window.ePayco.checkout.configure({
+                      sessionId: sessionId,
+                      type: external ? "standard" : "onepage",
+                      test: info.test
+                    });
+
+                    // Event handlers
+                    checkout.onCreated(() => {
+                    });
+
+                    checkout.onErrors(errors => {
+                      console.error(errors);
+                    });
+
+                    checkout.onClosed(() => {
+                      if (btnPagar) {
+                        btnPagar.classList.remove("disabled");
+                      }
+                    });
+                    
+                    if (checkout && typeof checkout.open === "function") {
+                      checkout.open();
+                    } else {
+                      console.error("Error: checkout.open no está disponible");
+                    }
+                  }
+                } catch (error) {
+                  showErrorMessage(error.message);
+                } finally {
+                  if (btnPagar) {
+                    btnPagar.classList.remove("disabled");
+                  }
+                }
+              };
+
+              var btnPagar = document.getElementById("btn_epayco");
+              if (btnPagar) {
+                btnPagar.addEventListener("click", openCheckout);
+              }
+              
+              // Validar el checkout automáticamente al cargar y desplegar
+              (async function() {
+                try {
+                  const validation = await validateCheckout(epayco_token, data, checkout_external == "true");
+                  
+                  if (validation.success) {
+                    document.getElementById("loading-payments").innerText = 
+                      checkout_lang == "es" ? "Abriendo tu pago..." : "Opening your payment...";
+                    showPaymentButton();
+                    
+                    // Desplegar el checkout automáticamente después de 500ms
+                    setTimeout(function() {
+                      makePayment(epayco_token, data, checkout_external == "true");
+                    }, 500);
+                  }
+                } catch (error) {
+                  document.getElementById("loading-payments").innerText = 
+                    checkout_lang == "es" ? "Error" : "Error";
+                  showErrorMessage(error.message);
+                }
+              })();
+              
+              window.onload = function () {
+                document.addEventListener("contextmenu", function (e) {
+                  e.preventDefault();
+                }, false);
+              };
+            })();
+            </script>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  ';
 
   return $output;
-
 }
 
 
@@ -154,7 +419,7 @@ function _uc_epayco_response_page() {
 
 
  $ref_payco=$response['ref_payco'];
- $url = 'https://secure.epayco.co/validation/v1/reference/'.$ref_payco;
+ $url = 'https://eks-ms-checkout-transaction-service.epayco.io/validation/v1/reference/'.$ref_payco;
   $ch = curl_init();
   $timeout = 5;
   $user_agent='Mozilla/5.0 (Windows NT 6.1; rv:8.0) Gecko/20100101 Firefox/8.0';
@@ -239,6 +504,7 @@ function _uc_epayco_response_page() {
         $comment = t("Order Canceled.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($validationData['x_extra4'], 'canceled');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id canceled. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -254,6 +520,7 @@ function _uc_epayco_response_page() {
         $comment = t("Order Rejected.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($validationData['x_extra4'], 'canceled');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -261,6 +528,7 @@ function _uc_epayco_response_page() {
         $comment = t("Order Rejected.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($validationData['x_extra4'], 'canceled');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -285,6 +553,7 @@ function _uc_epayco_response_page() {
         uc_order_update_status($validationData['x_extra4'], 'abandoned');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'abandoned');
         uc_cart_empty($validationData['x_extra4']);
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -293,6 +562,7 @@ function _uc_epayco_response_page() {
         uc_order_update_status($validationData['x_extra4'], 'abandoned');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'abandoned');
         uc_cart_empty($validationData['x_extra4']);
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -300,6 +570,7 @@ function _uc_epayco_response_page() {
         $comment = t("Order Canceled.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($validationData['x_extra4'], 'canceled');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id canceled. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -307,6 +578,7 @@ function _uc_epayco_response_page() {
         $comment = t("Order Rejected.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($validationData['x_extra4'], 'canceled');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
 
@@ -423,6 +695,7 @@ function _uc_epayco_confirmation_page() {
         uc_order_update_status($response['x_extra4'], 'canceled');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'canceled');
         uc_payment_enter($response['x_extra4'], 'epayco', $response['x_amount'], 0, NULL, $comment);
+        uc_epayco_restore_stock($order);
         echo "Order Canceled.";
         watchdog('ePayco', "Order !order_id canceled. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -440,6 +713,7 @@ function _uc_epayco_confirmation_page() {
         $comment = t("Order Rejected.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($response['x_extra4'], 'canceled');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         echo "Order Rejected.";
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -448,6 +722,7 @@ function _uc_epayco_confirmation_page() {
         $comment = t("Order Rejected.") . ' ' . t("ePayco # !reference_pol", $watchdog_variables);
         uc_order_update_status($response['x_extra4'], 'canceled');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'canceled');
+        uc_epayco_restore_stock($order);
         echo "Order Rejected.";
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -475,6 +750,7 @@ function _uc_epayco_confirmation_page() {
         uc_order_update_status($response['x_extra4'], 'abandoned');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'abandoned');
         uc_cart_empty($response['x_extra4']);
+        uc_epayco_restore_stock($order);
         echo "Order Processing.";
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -484,6 +760,7 @@ function _uc_epayco_confirmation_page() {
         uc_order_update_status($response['x_extra4'], 'abandoned');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'abandoned');
         uc_cart_empty($response['x_extra4']);
+        uc_epayco_restore_stock($order);
         echo "Order Processing.";
         watchdog('ePayco', "Order !order_id rejected. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -493,6 +770,7 @@ function _uc_epayco_confirmation_page() {
         uc_order_update_status($response['x_extra4'], 'canceled');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'canceled');
         uc_payment_enter($response['x_extra4'], 'epayco', $response['x_amount'], 0, NULL, $comment);
+        uc_epayco_restore_stock($order);
         echo "Order Canceled.";
         watchdog('ePayco', "Order !order_id canceled. ePayco # !reference_pol", $watchdog_variables);
         break;
@@ -502,6 +780,7 @@ function _uc_epayco_confirmation_page() {
         uc_order_update_status($response['x_extra4'], 'canceled');
         uc_order_comment_save($response['x_extra4'], 0, $comment, 'order', 'canceled');
         uc_payment_enter($response['x_extra4'], 'epayco', $response['x_amount'], 0, NULL, $comment);
+        uc_epayco_restore_stock($order);
         echo "Order Canceled.";
         watchdog('ePayco', "Order !order_id canceled. ePayco # !reference_pol", $watchdog_variables);
         break;
