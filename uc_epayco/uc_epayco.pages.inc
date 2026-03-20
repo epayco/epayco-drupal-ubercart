@@ -60,7 +60,7 @@ function _uc_epayco_checkout_page() {
               let email = document.getElementsByName("email")[0].value;
               let firstname = document.getElementsByName("firstname")[0].value;
               let reference = document.getElementsByName("reference")[0].value;
-              let lang = document.getElementsByName("lang_checkout")[0].value;
+              let lang = document.getElementsByName("lang_checkout")[0].value.trim().toLowerCase();
               let checkout_external = document.getElementsByName("checkout_external")[0].value;
               let test = document.getElementsByName("test")[0].value;
               let notify_url = document.getElementsByName("notify_url")[0].value;
