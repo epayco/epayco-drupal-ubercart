@@ -58,6 +58,14 @@ function uc_epayco_form_alter(&$form, &$form_state, $form_id) {
     global $language;
     global $user;
     $order = uc_order_load($order_id);
+
+    // Depuración: imprimir estructura de orden Ubercart antes de montar el checkout
+    if ($order) {
+      error_log('[ePayco] Ubercart order data: ' . print_r($order, TRUE));
+    } else {
+      error_log('[ePayco] Ubercart order not found for order_id ' . $order_id);
+    }
+
     if ($order->payment_method == 'epayco') {
 
       // OBTENER INFORMACIÓN DE LA API DE EPAYCO
@@ -90,12 +98,78 @@ function uc_epayco_form_alter(&$form, &$form_state, $form_id) {
             break;
         }
 
-      $tax = isset($order->line_items[1]['amount']) ? floatval($order->line_items[1]['amount']): 0;
-      if ($tax>0) {
-        $base_tax =  floatval($amount)-$tax;
-      }else{
-       $base_tax =  floatval($amount);
+      $iva_tax_id = uc_epayco_get_iva_tax_id();
+      $tax = 0;
+      $base_tax = 0;
+      $tax_is_ico = FALSE;
+      $tax_rate_name = '';
+
+      if ($iva_tax_id && module_exists('uc_taxes')) {
+        $tax_rate = uc_taxes_rate_load($iva_tax_id);
+        if ($tax_rate && isset($tax_rate->name)) {
+          $tax_rate_name = strtolower($tax_rate->name);
+          if (strpos($tax_rate_name, 'ico') !== FALSE) {
+            $tax_is_ico = TRUE;
+          }
+        }
       }
+
+      if (isset($order->tax) && floatval($order->tax) > 0) {
+        $tax = floatval($order->tax);
+      }
+
+      if ($tax <= 0 && !empty($iva_tax_id) && !empty($order->line_items) && is_array($order->line_items)) {
+        foreach ($order->line_items as $line_item) {
+          $line_name = strtolower((string) uc_epayco_get_line_item_value($line_item, 'name', ''));
+          $line_type = strtolower((string) uc_epayco_get_line_item_value($line_item, 'type', ''));
+          $line_amount = floatval(uc_epayco_get_line_item_value($line_item, 'amount', 0));
+          $line_tax_id = uc_epayco_get_line_item_data($line_item, 'tax_id', NULL);
+          $line_taxable_amount = uc_epayco_get_line_item_data($line_item, 'taxable_amount', NULL);
+
+          if ($line_tax_id == $iva_tax_id) {
+            $tax += $line_amount;
+            if ($line_taxable_amount !== NULL) {
+              $base_tax += floatval($line_taxable_amount);
+            }
+          }
+
+          error_log('[ePayco] line_item: name=' . $line_name . ' type=' . $line_type . ' amount=' . $line_amount . ' tax_id=' . ($line_tax_id !== NULL ? $line_tax_id : 'N/A') . ' taxable_amount=' . ($line_taxable_amount !== NULL ? $line_taxable_amount : 'N/A'));
+        }
+      }
+
+      if ($tax <= 0 && !empty($order->order_total) && !empty($order->order_subtotal)) {
+        $tax = floatval($order->order_total) - floatval($order->order_subtotal);
+      }
+
+      if ($tax <= 0 && !empty($order->subtotal) && !empty($order->order_total)) {
+        $tax = floatval($order->order_total) - floatval($order->subtotal);
+      }
+
+      if ($tax <= 0 && !empty($order->line_items) && is_array($order->line_items)) {
+        foreach ($order->line_items as $line_item) {
+          $line_name = strtolower((string) uc_epayco_get_line_item_value($line_item, 'name', ''));
+          $line_type = strtolower((string) uc_epayco_get_line_item_value($line_item, 'type', ''));
+          $line_amount = floatval(uc_epayco_get_line_item_value($line_item, 'amount', 0));
+          $line_tax_id = uc_epayco_get_line_item_data($line_item, 'tax_id', NULL);
+          if (strpos($line_name, 'tax') !== FALSE || strpos($line_type, 'tax') !== FALSE || strpos($line_name, 'iva') !== FALSE || strpos($line_type, 'iva') !== FALSE || strpos($line_name, 'ico') !== FALSE || strpos($line_type, 'ico') !== FALSE) {
+            $tax += $line_amount;
+          }
+          error_log('[ePayco] fallback line_item: name=' . $line_name . ' type=' . $line_type . ' amount=' . $line_amount . ' tax_id=' . ($line_tax_id !== NULL ? $line_tax_id : 'N/A'));
+        }
+      }
+
+      if ($tax > 0 && $base_tax <= 0) {
+        $base_tax = floatval($amount) - $tax;
+      }
+      if ($tax <= 0) {
+        $base_tax = floatval($amount);
+      }
+
+      $tax_field = $tax_is_ico ? 0 : $tax;
+      $tax_ico_field = $tax_is_ico ? $tax : 0;
+
+      error_log('[ePayco] selected_tax_id=' . $iva_tax_id . ' tax_name=' . $tax_rate_name . ' is_ico=' . ($tax_is_ico ? 'yes' : 'no') . ' tax=' . $tax . ' base_tax=' . $base_tax . ' tax_field=' . $tax_field . ' taxIco=' . $tax_ico_field);
+
       $description = array();
       $qty = 0;
       foreach ($order->products as $item) {
@@ -119,7 +193,8 @@ function uc_epayco_form_alter(&$form, &$form_state, $form_id) {
       $checkout_data = array(
         'epayco_token' => $session_token,
         'amount' => $amount,
-        'tax' => $tax,
+        'tax' => $tax_field,
+        'taxIco' => $tax_ico_field,
         'base_tax' => $base_tax,
         'currency' => $currency,
         'email' => $order->primary_email,
@@ -376,6 +451,27 @@ function uc_epayco_get_show_logo() {
 
 function uc_epayco_get_reference($order_id) {
   return uc_epayco_get_reference_prefix() . ' - ' . $order_id . (!uc_epayco_get_txn_type() ? ' - ' . t('Test') : '');
+}
+
+function uc_epayco_get_line_item_value($line_item, $key, $default = NULL) {
+  if (is_array($line_item) && array_key_exists($key, $line_item)) {
+    return $line_item[$key];
+  }
+  if (is_object($line_item) && property_exists($line_item, $key)) {
+    return $line_item->$key;
+  }
+  return $default;
+}
+
+function uc_epayco_get_line_item_data($line_item, $key, $default = NULL) {
+  $data = uc_epayco_get_line_item_value($line_item, 'data');
+  if (is_array($data) && array_key_exists($key, $data)) {
+    return $data[$key];
+  }
+  if (is_object($data) && property_exists($data, $key)) {
+    return $data->$key;
+  }
+  return $default;
 }
 
 function uc_epayco_get_iva($order) {
@@ -644,7 +740,7 @@ function uc_epayco_restore_stock($order) {
  * Realiza una llamada a la API de ePayco usando cURL
  */
 function uc_epayco_realizar_llamada_api($path, $data = array(), $headers = array(), $method = 'POST') {
-  $url = 'https://eks-checkout-service.epayco.io/' . $path;
+  $url = 'https://eks-apify-service.epayco.io/' . $path;
 
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $url);
