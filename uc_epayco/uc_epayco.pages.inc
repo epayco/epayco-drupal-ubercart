@@ -5,6 +5,7 @@ function _uc_epayco_checkout_page() {
   $amount = isset($_REQUEST["amount"]) ? floatval($_REQUEST["amount"]) : 0;
   $tax = isset($_REQUEST["tax"]) ? $_REQUEST["tax"] : '';
   $base_tax = isset($_REQUEST["base_tax"]) ? $_REQUEST["base_tax"] : '';
+  $tax_ico = isset($_REQUEST["taxIco"]) ? $_REQUEST["taxIco"] : '';
   $reference = isset($_REQUEST["reference"]) ? $_REQUEST["reference"] : '';
   $epayco_token = isset($_REQUEST["epayco_token"]) ? $_REQUEST["epayco_token"] : '';
 
@@ -37,6 +38,7 @@ function _uc_epayco_checkout_page() {
             <input type="hidden" name="amount" value="' . htmlspecialchars($_REQUEST["amount"]) . '"/>
             <input type="hidden" name="tax" value="' . htmlspecialchars($tax) . '"/>
             <input type="hidden" name="base_tax" value="' . htmlspecialchars($base_tax) . '"/>
+            <input type="hidden" name="taxIco" value="' . htmlspecialchars($tax_ico) . '"/>
             <input type="hidden" name="currency" value="' . htmlspecialchars($_REQUEST["currency"]) . '"/>
             <input type="hidden" name="email" value="' . htmlspecialchars($_REQUEST["email"]) . '"/>
             <input type="hidden" name="firstname" value="' . htmlspecialchars($_REQUEST["firstname"]) . '"/>
@@ -62,6 +64,7 @@ function _uc_epayco_checkout_page() {
               let amount = document.getElementsByName("amount")[0].value;
               let tax = document.getElementsByName("tax")[0].value;
               let base_tax = document.getElementsByName("base_tax")[0].value;
+              let tax_ico = document.getElementsByName("taxIco")[0].value;
               let currency = document.getElementsByName("currency")[0].value;
               let email = document.getElementsByName("email")[0].value;
               let firstname = document.getElementsByName("firstname")[0].value;
@@ -81,6 +84,8 @@ function _uc_epayco_checkout_page() {
               let country = document.getElementsByName("country")[0].value;
               let ip = document.getElementsByName("ip")[0].value;
               
+
+              
               var checkout_lang = lang == "es" || lang == "es_CO" ? "es" : "en";
               
               if(checkout_lang == "es"){
@@ -98,7 +103,7 @@ function _uc_epayco_checkout_page() {
                 amount: parseFloat(amount),
                 taxBase: parseFloat(base_tax),
                 tax: finalTax,
-                taxIco: parseFloat(0),
+                taxIco: parseFloat(tax_ico),
                 country: country,
                 lang: checkout_lang,
                 confirmation: notify_url,
@@ -129,6 +134,7 @@ function _uc_epayco_checkout_page() {
                 config: {}
               };
               
+
               var openCheckout = function () {
                 var btnPagar = document.getElementById("btn_epayco");
                 if (btnPagar) {
@@ -501,7 +507,7 @@ function _uc_epayco_response_page() {
 
         case 1: // Payment Received
         $comment = t("Order Completed.") . ' ' . t("ePayco# !reference_pol", $watchdog_variables);
-               uc_order_update_status($validationData['x_extra4'], 'completed');
+        uc_order_update_status($validationData['x_extra4'], 'completed');
         uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order', 'completed');
         // uc_order_comment_save($validationData['x_extra4'], 0, $comment, 'order');
         uc_payment_enter($validationData['x_extra4'], 'epayco', $validationData['x_amount'], 0, NULL, $comment);
