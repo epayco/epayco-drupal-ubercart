@@ -251,8 +251,8 @@ msgstr ""
 "usuario. Si el idioma no está disponible se usará éste valor."
 
 #: uc_epayco.module:184
-msgid "No IVA"
-msgstr "Sin IVA"
+msgid "No tax"
+msgstr "Sin impuesto"
 
 #: uc_epayco.module:189
 msgid "This is the list of taxes you have in your !uctaxesurl"
@@ -295,8 +295,8 @@ msgid "My Store"
 msgstr "Mi Tienda"
 
 #: uc_epayco.module:274
-msgid "Pay with a national and international credit/debit card, PSE, Daviplata, Nequi, Paypal, Cash, Safetypay and many more."
-msgstr "Paga con Tarjeta de crédito/débito nacional e internacional, PSE, Daviplata, Nequi, Paypal, Efectivo, Safetypay y muchos más."
+msgid "Payment with Savings or Checking account."
+msgstr "Pago con Cuenta corriente y Cuenta de ahorros."
 
 #: uc_epayco.module:364
 msgid "Colombian Peso"
