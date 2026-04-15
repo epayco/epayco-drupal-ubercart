@@ -2,6 +2,12 @@
 
 function _uc_epayco_checkout_page() {
   $lang = isset($_REQUEST["lang_checkout"]) ? $_REQUEST["lang_checkout"] : 'es';
+  $amount = isset($_REQUEST["amount"]) ? floatval($_REQUEST["amount"]) : 0;
+  $tax = isset($_REQUEST["tax"]) ? $_REQUEST["tax"] : '';
+  $base_tax = isset($_REQUEST["base_tax"]) ? $_REQUEST["base_tax"] : '';
+  $reference = isset($_REQUEST["reference"]) ? $_REQUEST["reference"] : '';
+  $epayco_token = isset($_REQUEST["epayco_token"]) ? $_REQUEST["epayco_token"] : '';
+
   $epaycoButtonImage = ($lang == 'EN') 
     ? 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color-Ingles.png'
     : 'https://multimedia.epayco.co/epayco-landing/btns/Boton-epayco-color1.png';
@@ -27,10 +33,10 @@ function _uc_epayco_checkout_page() {
         </center>
         <div id="form-button-container">
           <form>
-            <input type="hidden" name="epayco_token" value="' . htmlspecialchars($_REQUEST["epayco_token"]) . '"/>
+            <input type="hidden" name="epayco_token" value="' . htmlspecialchars($epayco_token) . '"/>
             <input type="hidden" name="amount" value="' . htmlspecialchars($_REQUEST["amount"]) . '"/>
-            <input type="hidden" name="tax" value="' . htmlspecialchars($_REQUEST["tax"]) . '"/>
-            <input type="hidden" name="base_tax" value="' . htmlspecialchars($_REQUEST["base_tax"]) . '"/>
+            <input type="hidden" name="tax" value="' . htmlspecialchars($tax) . '"/>
+            <input type="hidden" name="base_tax" value="' . htmlspecialchars($base_tax) . '"/>
             <input type="hidden" name="currency" value="' . htmlspecialchars($_REQUEST["currency"]) . '"/>
             <input type="hidden" name="email" value="' . htmlspecialchars($_REQUEST["email"]) . '"/>
             <input type="hidden" name="firstname" value="' . htmlspecialchars($_REQUEST["firstname"]) . '"/>
@@ -66,6 +72,8 @@ function _uc_epayco_checkout_page() {
               let notify_url = document.getElementsByName("notify_url")[0].value;
               let return_url = document.getElementsByName("return_url")[0].value;
               let extra2 = document.getElementsByName("extra2")[0].value;
+              
+              let finalTax = parseFloat(tax);
               let extra3 = document.getElementsByName("extra3")[0].value;
               let extra4 = document.getElementsByName("extra4")[0].value;
               let address = document.getElementsByName("address")[0].value;
@@ -89,7 +97,7 @@ function _uc_epayco_checkout_page() {
                 currency: currency.toLowerCase(),
                 amount: parseFloat(amount),
                 taxBase: parseFloat(base_tax),
-                tax: parseFloat(tax),
+                tax: finalTax,
                 taxIco: parseFloat(0),
                 country: country,
                 lang: checkout_lang,
@@ -120,7 +128,7 @@ function _uc_epayco_checkout_page() {
                 uniqueTransactionPerBill: false,
                 config: {}
               };
-
+              
               var openCheckout = function () {
                 var btnPagar = document.getElementById("btn_epayco");
                 if (btnPagar) {
@@ -141,10 +149,12 @@ function _uc_epayco_checkout_page() {
               };
 
               var validateCheckout = async function (token_epayco, info, external) {
-                const headers = { "Content-Type": "application/json" };
-                if (token_epayco) {
-                  headers["Authorization"] = "Bearer " + token_epayco;
+                if (!token_epayco || token_epayco.toString().trim() === "") {
+                  throw new Error("Token de sesión ePayco ausente. Revisa la generación de token en el servidor.");
                 }
+
+                const headers = { "Content-Type": "application/json" };
+                headers["Authorization"] = "Bearer " + token_epayco;
                 
                 try {
                   const response = await fetch("https://eks-apify-service.epayco.io/payment/session/create", {
