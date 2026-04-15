@@ -424,7 +424,7 @@ function uc_epayco_method($op, $arg1 = NULL, $form = NULL, &$form_state = NULL) 
 
 function uc_epayco_get_title() {
   $module_path = drupal_get_path('module', 'uc_epayco');
-  $logo_path = base_path() . $module_path . 'https://multimedia.epayco.co/plugins-sdks/paymentLogo.svg';
+  $logo_path = 'https://multimedia.epayco.co/plugins-sdks/paymentLogo.svg';
   $logo = '<img src="' . $logo_path . '"  width="100%" height="auto" alt="ePayco" />';
   $title = uc_epayco_get_method_title();
   switch (uc_epayco_get_show_logo()) {
