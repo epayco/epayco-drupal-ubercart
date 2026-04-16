@@ -251,8 +251,8 @@ msgstr ""
 "usuario. Si el idioma no está disponible se usará éste valor."
 
 #: uc_epayco.module:184
-msgid "No IVA"
-msgstr "Sin IVA"
+msgid "No tax"
+msgstr "Sin impuesto"
 
 #: uc_epayco.module:189
 msgid "This is the list of taxes you have in your !uctaxesurl"
